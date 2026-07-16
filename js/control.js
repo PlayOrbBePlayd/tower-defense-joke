@@ -39,26 +39,31 @@
   }
 
   /* ---------------- Sidebar ---------------- */
-  // Show-open intro: plays the 8s reveal on the board, then returns to the
-  // title screen automatically. Client name is baked into the reveal.
-  let introTO = null;
+  // Show-open intro: 3-2-1 countdown + reveal, then it STAYS on screen
+  // (lights flashing, title throbbing) until the host closes it — the same
+  // button toggles between PLAY and CLOSE.
   $('ctlClientName').value = S().clientName || '';
   $('ctlClientName').oninput = () => Store.patch((s) => { s.clientName = $('ctlClientName').value; });
   $('playIntro').onclick = () => {
-    Store.patch((s) => { s.boardMode = 'intro'; s.introId = (s.introId || 0) + 1; });
-    toast('🎬 3-2-1… intro rolling on the board!');
-    clearTimeout(introTO);
-    // 3s countdown + 8s reveal + a little slack, then back to the title screen.
-    introTO = setTimeout(() => {
-      if (S().boardMode === 'intro') { Store.patch((s) => { s.boardMode = 'logo'; }); syncTabs(); }
-    }, 11400);
+    if (S().boardMode === 'intro') {
+      Store.patch((s) => { s.boardMode = 'logo'; });
+      syncTabs();
+      toast('Intro closed');
+    } else {
+      Store.patch((s) => { s.boardMode = 'intro'; s.introId = (s.introId || 0) + 1; });
+      toast('🎬 3-2-1… intro rolling — press again to close');
+    }
+    updateIntroBtn();
   };
+  function updateIntroBtn() {
+    $('playIntro').textContent = S().boardMode === 'intro' ? '⏹ CLOSE INTRO' : '🎬 PLAY INTRO! (3-2-1)';
+  }
 
   // Show-close outro: balloons fall until the host switches screens.
   $('playOutro').onclick = () => {
-    clearTimeout(introTO);
     Store.patch((s) => { s.boardMode = 'outro'; s.outroId = (s.outroId || 0) + 1; });
     toast('🎈 Outro playing — balloons away!');
+    updateIntroBtn();
   };
 
   $('toLogo').onclick = () => { Store.patch((s) => { s.boardMode = 'logo'; }); syncTabs(); };
@@ -502,6 +507,7 @@
 
   Store.subscribe(() => {
     renderMain(); renderStrikeDots(); $('fmTotal').textContent = fastTotal(); updateEventUI();
+    updateIntroBtn();
     const cn = $('ctlClientName');
     if (cn && document.activeElement !== cn) cn.value = S().clientName || '';
   });
@@ -519,6 +525,7 @@
     initEvent();
     buildRoster();
     updateEventUI();
+    updateIntroBtn();
     Theme.apply();
   }
 

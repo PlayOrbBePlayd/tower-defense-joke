@@ -105,8 +105,9 @@ name.
 
 - In **Host Control**, type the **Client name** at the top of the sidebar
   (it saves instantly and also lives in Branding), then hit **🎬 PLAY INTRO!**
-- The board counts down, plays the reveal, and automatically returns to the
-  title screen (~11s total). Press the button again anytime to replay it.
+- The board counts down, plays the reveal, and then **stays up** — lights
+  flashing, title pulsing — until you press the same button (now **⏹ CLOSE
+  INTRO**) or switch screens.
 
 Close the event with **🎈 Play Outro** — "THANKS FOR PLAYING!" slams in over a
 sky of balloons drifting down with confetti, plus the client's name in a gold
