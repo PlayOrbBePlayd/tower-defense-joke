@@ -112,6 +112,25 @@ Close the event with **🎈 Play Outro** — "THANKS FOR PLAYING!" slams in over
 sky of balloons drifting down with confetti, plus the client's name in a gold
 banner. It keeps playing until you switch screens (perfect as the crowd leaves).
 
+## The face-off flow — matchup, buzzer race, play or pass 🔔
+
+Each round can open exactly like the TV show. The **FACE-OFF strip** at the top
+of Host Control's Main Game panel walks you through it:
+
+1. **1 · Matchup** — the board shows "ROUND X: Team A **VS** Team B" with the two
+   teams sliding in. Which teams play each round is set in the **Event tab →
+   Round matchups** editor (a pair of dropdowns per round).
+2. **2 · Question** — the board shows JUST the question, huge, with "HANDS ON
+   BUZZERS…" flashing. The two players race to buzz in.
+3. **Buzzed first** — tap whichever team hit the buzzer first (the two buttons are
+   pre-labeled with this round's teams). The board announces "🔔 TEAM BUZZED IN!".
+4. After their guess, hit **▶ PLAY** (they keep the board) or **⤿ PASS** (the other
+   team takes it). The board announces "★ TEAM HAS CONTROL!".
+5. **3 · Reveal Board** — the answer board appears with a green "has control" chip,
+   and you run the round as usual.
+
+The **↺** button resets the face-off, and **Next Round** clears it automatically.
+
 ## Running a big event — many teams, many rounds 🏆
 
 For a large game (e.g. **12 teams across 10 rounds**), use **Event / Tournament mode**

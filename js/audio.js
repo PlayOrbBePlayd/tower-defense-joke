@@ -92,6 +92,14 @@
       tone(880, 0.03, 0.08, 'triangle', 0.14);
     },
 
+    // Face-off buzz-in — bright attention-grabbing "beep!"
+    buzzIn() {
+      if (!enabled) return;
+      tone(988, 0, 0.14, 'square', 0.26);
+      tone(1318, 0.1, 0.3, 'triangle', 0.3);
+      noise(0, 0.12, 0.05, 3200);
+    },
+
     // Timer end
     timeUp() {
       if (!enabled) return;

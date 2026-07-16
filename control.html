@@ -32,6 +32,24 @@
       <!-- LEFT: mode-specific control -->
       <div>
         <div class="panel" id="mainPanel">
+          <!-- Face-off flow: matchup screen → question buzzer race → play/pass → board -->
+          <div class="faceoff-strip" id="faceoffStrip">
+            <span class="fo-label">FACE-OFF</span>
+            <button class="btn gold sm" id="foMatchup">1 · Matchup</button>
+            <button class="btn blue sm" id="foQuestion">2 · Question</button>
+            <span class="fo-group">
+              <span class="fo-cap">Buzzed first:</span>
+              <button class="btn ghost sm" id="foBuzzA">Team 1</button>
+              <button class="btn ghost sm" id="foBuzzB">Team 2</button>
+            </span>
+            <span class="fo-group">
+              <button class="btn green sm" id="foPlay" disabled>▶ PLAY</button>
+              <button class="btn red sm" id="foPass" disabled>⤿ PASS</button>
+            </span>
+            <button class="btn gold sm" id="foBoard">3 · Reveal Board</button>
+            <button class="btn ghost sm" id="foReset" title="Reset face-off">↺</button>
+          </div>
+
           <!-- teams -->
           <div class="teams-row" id="teamsRow"></div>
 
@@ -142,6 +160,12 @@
             <span class="hint" style="margin:0">names sync to the board live</span>
           </div>
           <div class="ev-roster" id="evRoster"></div>
+
+          <div class="ev-roster-head" style="margin-top:16px">
+            <span>Round matchups — who plays each round</span>
+            <span class="hint" style="margin:0">shown on the board's matchup screen</span>
+          </div>
+          <div class="ev-matchups" id="evMatchups"></div>
         </div>
       </div>
 

@@ -96,6 +96,28 @@
   background:rgba(255,255,255,.1); color:#fff; }
 .ev-team .mini:hover { background: var(--c-accent); color:#3a2500; }
 
+/* Face-off flow strip (top of Main panel) */
+.faceoff-strip { display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  background: rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.1); border-radius:12px;
+  padding:10px 12px; margin-bottom:14px; }
+.faceoff-strip .fo-label { font-family:var(--font-cond); font-weight:700; text-transform:uppercase;
+  letter-spacing:.1em; color:var(--c-accent); font-size:14px; margin-right:2px; }
+.faceoff-strip .fo-group { display:flex; align-items:center; gap:6px;
+  background: rgba(255,255,255,.05); border-radius:9px; padding:4px 6px; }
+.faceoff-strip .fo-cap { font-size:12px; color:#9fb0e6; text-transform:uppercase; letter-spacing:.08em; font-weight:600; }
+.faceoff-strip .btn.buzzed { outline:3px solid var(--c-accent); }
+.faceoff-strip .btn.controlled { outline:3px solid #3ce88a; }
+
+/* Round matchup editor (Event panel) */
+.ev-matchups { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:8px;
+  max-height:300px; overflow:auto; padding-right:4px; }
+.ev-mu { display:grid; grid-template-columns:auto 1fr auto 1fr; gap:8px; align-items:center;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:9px; padding:6px 10px; }
+.ev-mu.current { border-color: var(--c-accent); }
+.ev-mu .r { font-family:var(--font-display); color:var(--c-accent); font-size:15px; min-width:34px; }
+.ev-mu .v { font-family:var(--font-cond); font-weight:700; color:#9fb0e6; font-size:13px; text-align:center; }
+.ev-mu select { padding:6px 8px; font-size:13px; }
+
 /* Event award bar in Main panel */
 .event-award { margin-top:14px; border-top:2px solid var(--c-accent); padding-top:12px; }
 .ea-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }

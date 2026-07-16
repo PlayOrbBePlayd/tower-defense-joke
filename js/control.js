@@ -207,7 +207,7 @@
     renderMain();
   }
   $('newRound').onclick = () => {
-    Store.patch((s) => { Store.initRound(); s.main.showStrikeBig = false; });
+    Store.patch((s) => { Store.initRound(); s.main.showStrikeBig = false; s.event.faceoff = { buzzed: null, control: null }; });
     renderMain();
     toast('New round ready');
   };
@@ -312,6 +312,96 @@
   $('fmStop').onclick = () => { clearInterval(timerInt); Store.patch((s) => { s.fast.timerRunning = false; }); };
   $('fmReset').onclick = () => { clearInterval(timerInt); const secs = +$('fmTimerSet').value || 20; Store.patch((s) => { s.fast.timerSeconds = secs; s.fast.timerMax = secs; s.fast.timerRunning = false; }); };
   $('fmLabel').oninput = () => Store.patch((s) => { s.fast.timerLabel = $('fmLabel').value; });
+
+  /* ---------------- FACE-OFF flow (matchup → question → play/pass) ---------------- */
+  // The two teams facing off this round (from event.matchups, safe fallbacks).
+  function foTeams() {
+    const s = S();
+    const m = (s.event.matchups || [])[(s.event.round || 1) - 1] || [];
+    const a = Number.isInteger(m[0]) && s.teams[m[0]] ? m[0] : 0;
+    let b = Number.isInteger(m[1]) && s.teams[m[1]] ? m[1] : (s.teams[1] ? 1 : 0);
+    if (b === a && s.teams.length > 1) b = a === 0 ? 1 : 0;
+    return [a, b];
+  }
+
+  $('foMatchup').onclick = () => { Store.patch((s) => { s.boardMode = 'matchup'; }); syncTabs(); Sound.click(); };
+  $('foQuestion').onclick = () => { Store.patch((s) => { s.boardMode = 'question'; }); syncTabs(); Sound.click(); };
+  $('foBuzzA').onclick = () => buzz(0);
+  $('foBuzzB').onclick = () => buzz(1);
+  function buzz(side) {
+    const [a, b] = foTeams();
+    const team = side === 0 ? a : b;
+    Store.patch((s) => { s.event.faceoff = { buzzed: team, control: null }; });
+    Sound.buzzIn();
+    toast('🔔 ' + S().teams[team].name + ' buzzed in first!');
+    updateFaceoffUI();
+  }
+  $('foPlay').onclick = () => decide(true);
+  $('foPass').onclick = () => decide(false);
+  function decide(play) {
+    const s = S(); const fo = s.event.faceoff || {};
+    if (fo.buzzed == null) return;
+    const [a, b] = foTeams();
+    const other = fo.buzzed === a ? b : a;
+    const control = play ? fo.buzzed : other;
+    Store.patch((st) => { st.event.faceoff.control = control; st.main.activeTeam = control; });
+    Sound.ding();
+    toast((play ? '▶ PLAY' : '⤿ PASS') + ' — ' + s.teams[control].name + ' takes the board!');
+    updateFaceoffUI();
+  }
+  $('foBoard').onclick = () => { Store.patch((s) => { s.boardMode = 'main'; }); syncTabs(); Sound.click(); };
+  $('foReset').onclick = () => {
+    Store.patch((s) => { s.event.faceoff = { buzzed: null, control: null }; s.main.activeTeam = null; });
+    updateFaceoffUI(); toast('Face-off reset');
+  };
+
+  function updateFaceoffUI() {
+    const s = S(); const [a, b] = foTeams(); const fo = s.event.faceoff || {};
+    const ba = $('foBuzzA'), bb = $('foBuzzB');
+    ba.textContent = s.teams[a] ? s.teams[a].name : 'Team A';
+    bb.textContent = s.teams[b] ? s.teams[b].name : 'Team B';
+    ba.classList.toggle('buzzed', fo.buzzed === a);
+    bb.classList.toggle('buzzed', fo.buzzed === b);
+    ba.classList.toggle('controlled', fo.control === a);
+    bb.classList.toggle('controlled', fo.control === b);
+    const decided = fo.control != null;
+    $('foPlay').disabled = fo.buzzed == null || decided;
+    $('foPass').disabled = fo.buzzed == null || decided;
+  }
+
+  /* ---- Round matchup editor (Event panel) ---- */
+  let muSig = '';
+  function renderMatchupEditor() {
+    const s = S(); const n = s.event.totalRounds;
+    const opts = (sel) => ['<option value="-1">—</option>']
+      .concat(s.teams.map((t, i) => `<option value="${i}" ${sel === i ? 'selected' : ''}>${escHtml(t.name)}</option>`)).join('');
+    $('evMatchups').innerHTML = Array.from({ length: n }, (_, r) => {
+      const m = (s.event.matchups || [])[r] || [-1, -1];
+      return `<div class="ev-mu ${s.event.round === r + 1 ? 'current' : ''}"><span class="r">R${r + 1}</span>
+        <select data-mu="${r}:0">${opts(m[0])}</select><span class="v">vs</span>
+        <select data-mu="${r}:1">${opts(m[1])}</select></div>`;
+    }).join('');
+    $('evMatchups').querySelectorAll('select').forEach((sel) => {
+      sel.onchange = () => {
+        const [r, side] = sel.dataset.mu.split(':').map(Number);
+        Store.patch((st) => {
+          if (!Array.isArray(st.event.matchups)) st.event.matchups = [];
+          while (st.event.matchups.length < st.event.totalRounds) st.event.matchups.push([-1, -1]);
+          st.event.matchups[r][side] = +sel.value;
+        });
+        updateFaceoffUI();
+      };
+    });
+  }
+  // Rebuild only when relevant state changed and no dropdown is being used.
+  function maybeRenderMatchups() {
+    const s = S();
+    const sig = [s.event.round, s.event.totalRounds, s.teams.map((t) => t.name).join('§'), JSON.stringify(s.event.matchups)].join('|');
+    if (sig === muSig) return;
+    if ($('evMatchups').contains(document.activeElement)) return;
+    muSig = sig;
+    renderMatchupEditor();
+  }
 
   /* ---------------- Cross-device sync UI ---------------- */
   const syncModal = $('syncModal');
@@ -511,6 +601,8 @@
       s.main.questionIndex = Math.min(s.questions.main.length - 1, s.main.questionIndex + 1);
       Store.initRound();
       s.main.showStrikeBig = false;
+      s.event.faceoff = { buzzed: null, control: null };   // fresh buzzer race
+      s.main.activeTeam = null;
       s.boardMode = 'leaderboard';
     });
     $('evRound').value = S().event.round;
@@ -546,6 +638,9 @@
     }
     // keep setup fields in step
     if (document.activeElement !== $('evRound')) $('evRound').value = s.event.round;
+    // face-off strip + matchup editor stay current on every state change
+    updateFaceoffUI();
+    maybeRenderMatchups();
   }
 
   function buildAwardGrid() {
