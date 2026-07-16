@@ -58,6 +58,7 @@
 
     // Mode routing
     if (s.boardMode === 'intro') renderIntro(s);
+    else if (s.boardMode === 'outro') renderOutro(s);
     else if (s.boardMode === 'main') renderMain(s);
     else if (s.boardMode === 'fast') renderFast(s);
     else if (s.boardMode === 'leaderboard') renderLeaderboard(s);
@@ -114,17 +115,21 @@
     stage.innerHTML = introHtml(s);
     Theme.apply();
 
-    // Soundtrack + confetti choreographed to the slams. Each cue re-checks the
-    // mode so nothing fires if the host cuts the intro short.
+    // Soundtrack + confetti choreographed to the countdown (0-3s) and the
+    // slams that follow. Each cue re-checks the mode so nothing fires if the
+    // host cuts the intro short.
     const cue = (ms, fn) => setTimeout(() => { if (Store.get().boardMode === 'intro') fn(); }, ms);
-    Sound.fanfare();
-    cue(950, () => Sound.ding());
-    cue(1850, () => {
+    Sound.flip();                      // 3
+    cue(1000, () => Sound.flip());     // 2
+    cue(2000, () => Sound.flip());     // 1
+    cue(3000, () => Sound.fanfare());  // curtains up
+    cue(3950, () => Sound.ding());
+    cue(4850, () => {
       Sound.fanfare();
       const t = Store.get().theme;
       Confetti.fire(confettiCanvas, { colors: [t.accent, t.primary, '#ffffff', '#3ce88a'], count: 240 });
     });
-    cue(3650, () => {
+    cue(6650, () => {
       Sound.reveal();
       const t = Store.get().theme;
       Confetti.fire(confettiCanvas, { colors: [t.accent, '#ffffff'], count: 160 });
@@ -145,11 +150,53 @@
         <div class="intro-flash f2"></div>
         <div class="intro-bulbs top">${bulbs}</div>
         <div class="intro-bulbs bottom">${bulbs}</div>
+        <div class="intro-count"><span>3</span><span>2</span><span>1</span></div>
         <div class="intro-ready">GET READY FOR</div>
         <div class="intro-brand">TEAMBUILDING ROI</div>
         <div class="intro-title">${escapeHtml(first)} <span class="accent">${escapeHtml(last)}!</span></div>
         <div class="intro-client"><small>PRESENTED FOR</small>${escapeHtml(client)}</div>
       </div>`;
+  }
+
+  /* ---------------- OUTRO (show close, balloons falling) ---------------- */
+  function renderOutro(s) {
+    if (prev.boardMode === 'outro' && prev.outroId === s.outroId) return;
+    prev.boardMode = 'outro';
+    prev.outroId = s.outroId;
+
+    const colors = [s.theme.accent, s.theme.primary, '#ff6b8a', '#7ee6a5', '#8aa6ff', '#ffe08a', '#ff9e5e'];
+    let balloons = '';
+    for (let i = 0; i < 26; i++) {
+      const left = 2 + Math.random() * 92;
+      const dur = 7 + Math.random() * 5;
+      const delay = Math.random() * 6;
+      const size = 0.7 + Math.random() * 0.6;
+      const c = colors[i % colors.length];
+      balloons += `<span class="balloon" style="left:${left.toFixed(1)}%;--bc:${c};animation-duration:${dur.toFixed(1)}s;animation-delay:${delay.toFixed(1)}s;--bs:${size.toFixed(2)}"></span>`;
+    }
+
+    const client = s.clientName || 'YOUR TEAM';
+    stage.innerHTML = `
+      <div class="outro-screen">
+        <div class="intro-rays"></div>
+        <div class="balloon-layer">${balloons}</div>
+        <div class="outro-title">THANKS FOR<br/>PLAYING<span class="accent">!</span></div>
+        <div class="outro-sub">TEAMBUILDING ROI · ${escapeHtml(s.theme.title || 'FAMILY FEUD')}</div>
+        <div class="intro-client outro-client"><small>WITH OUR FRIENDS AT</small>${escapeHtml(client)}</div>
+      </div>`;
+    Theme.apply();
+
+    const cue = (ms, fn) => setTimeout(() => { if (Store.get().boardMode === 'outro') fn(); }, ms);
+    Sound.fanfare();
+    cue(400, () => {
+      const t = Store.get().theme;
+      Confetti.fire(confettiCanvas, { colors: [t.accent, t.primary, '#ffffff', '#ff6b8a'], count: 240 });
+    });
+    cue(1800, () => {
+      Sound.reveal();
+      const t = Store.get().theme;
+      Confetti.fire(confettiCanvas, { colors: [t.accent, '#ffffff', '#7ee6a5'], count: 150 });
+    });
   }
 
   /* ---------------- LEADERBOARD (event mode) ---------------- */

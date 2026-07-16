@@ -36,6 +36,8 @@
 
     // Show-open intro reveal: bump introId to (re)play it on the board.
     introId: 0,
+    // Show-close outro (balloons): bump outroId to (re)play it.
+    outroId: 0,
 
     teams: [
       { name: 'TEAM 1', score: 0 },
