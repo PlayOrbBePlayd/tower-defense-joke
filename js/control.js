@@ -70,6 +70,9 @@
   $('toMain').onclick = () => { Store.patch((s) => { s.boardMode = 'main'; }); switchPanel('main'); };
   $('toFast').onclick = () => { Store.patch((s) => { s.boardMode = 'fast'; }); switchPanel('fast'); };
   $('celebrate').onclick = () => { Store.fx('confetti'); toast('🎊 Celebration!'); };
+  $('fxSmoke').onclick = () => { Store.fx('smoke'); toast('💨 Smoke machine!'); };
+  $('fxLasers').onclick = () => { Store.fx('lasers'); toast('⚡ Laser show!'); };
+  $('fxUfo').onclick = () => { Store.fx('ufo'); toast('🛸 UFO inbound!'); };
   // Factory reset — wipes EVERYTHING back to defaults (scores, teams,
   // matchups, questions, branding, client name) for a brand-new game.
   // Password-protected so it can't be hit by accident mid-event.
@@ -342,6 +345,24 @@
   $('fmStop').onclick = () => { clearInterval(timerInt); Store.patch((s) => { s.fast.timerRunning = false; }); };
   $('fmReset').onclick = () => { clearInterval(timerInt); const secs = +$('fmTimerSet').value || 20; Store.patch((s) => { s.fast.timerSeconds = secs; s.fast.timerMax = secs; s.fast.timerRunning = false; }); };
   $('fmLabel').oninput = () => Store.patch((s) => { s.fast.timerLabel = $('fmLabel').value; });
+
+  // Full Fast Money reset: both players' answers, totals, timer, back to Q1.
+  $('fmResetRound').onclick = () => {
+    if (!confirm('Reset Fast Money? This clears BOTH players\' answers, hides totals, resets the timer, and returns to question 1.')) return;
+    clearInterval(timerInt);
+    const secs = +$('fmTimerSet').value || 20;
+    Store.patch((s) => {
+      s.fast.p1 = Store.emptyFast();
+      s.fast.p2 = Store.emptyFast();
+      s.fast.showTotals = false;
+      s.fast.questionIndex = 0;
+      s.fast.timerSeconds = secs;
+      s.fast.timerMax = secs;
+      s.fast.timerRunning = false;
+    });
+    renderFast();
+    toast('↺ Fast Money reset — fresh round');
+  };
 
   /* ---------------- FACE-OFF flow (matchup → question → play/pass) ---------------- */
   // The two teams facing off this round (from event.matchups, safe fallbacks).

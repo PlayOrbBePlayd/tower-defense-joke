@@ -16,6 +16,8 @@
 
   const LS_KEY = 'ff_state_v5';
   const CHANNEL = 'family-feud-live';
+  // 8 fast-money answer slots per player — one per speed-round question category.
+  const FAST_SLOTS = 8;
 
   // ---- Default content ------------------------------------------------------
   const DEFAULT_THEME = {
@@ -101,7 +103,7 @@
   };
 
   function emptyFast() {
-    return Array.from({ length: 5 }, () => ({ answer: '', points: 0, revealed: false }));
+    return Array.from({ length: FAST_SLOTS }, () => ({ answer: '', points: 0, revealed: false }));
   }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
@@ -138,6 +140,13 @@
         ? clone(global.FF_DEFAULT_QUESTIONS) : base.questions;
     }
     if (!Array.isArray(merged.main.revealed)) merged.main.revealed = [];
+    // Pad older saves' fast-money slots up to the current count (5 -> 8).
+    ['p1', 'p2'].forEach((k) => {
+      if (!Array.isArray(merged.fast[k])) merged.fast[k] = [];
+      while (merged.fast[k].length < FAST_SLOTS) {
+        merged.fast[k].push({ answer: '', points: 0, revealed: false });
+      }
+    });
     return merged;
   }
 
