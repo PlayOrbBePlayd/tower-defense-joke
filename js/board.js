@@ -57,7 +57,8 @@
     }
 
     // Mode routing
-    if (s.boardMode === 'main') renderMain(s);
+    if (s.boardMode === 'intro') renderIntro(s);
+    else if (s.boardMode === 'main') renderMain(s);
     else if (s.boardMode === 'fast') renderFast(s);
     else if (s.boardMode === 'leaderboard') renderLeaderboard(s);
     else renderLogo(s);
@@ -99,6 +100,55 @@
         <div class="big-title">${escapeHtml(first)} <span class="accent">${escapeHtml(last)}</span></div>
         <div class="sub" data-brand-subtitle>${escapeHtml(s.theme.subtitle || '')}</div>
         <div class="marquee">${'<span class="bulb"></span>'.repeat(9)}</div>
+      </div>`;
+  }
+
+  /* ---------------- INTRO REVEAL (show open) ---------------- */
+  // Full-screen 8-second hype sequence: spinning light rays, chasing marquee
+  // bulbs, screen flashes, the title slamming in, and the client-name banner.
+  // Replays whenever control bumps introId.
+  function renderIntro(s) {
+    if (prev.boardMode === 'intro' && prev.introId === s.introId) return;
+    prev.boardMode = 'intro';
+    prev.introId = s.introId;
+    stage.innerHTML = introHtml(s);
+    Theme.apply();
+
+    // Soundtrack + confetti choreographed to the slams. Each cue re-checks the
+    // mode so nothing fires if the host cuts the intro short.
+    const cue = (ms, fn) => setTimeout(() => { if (Store.get().boardMode === 'intro') fn(); }, ms);
+    Sound.fanfare();
+    cue(950, () => Sound.ding());
+    cue(1850, () => {
+      Sound.fanfare();
+      const t = Store.get().theme;
+      Confetti.fire(confettiCanvas, { colors: [t.accent, t.primary, '#ffffff', '#3ce88a'], count: 240 });
+    });
+    cue(3650, () => {
+      Sound.reveal();
+      const t = Store.get().theme;
+      Confetti.fire(confettiCanvas, { colors: [t.accent, '#ffffff'], count: 160 });
+    });
+  }
+
+  function introHtml(s) {
+    const client = s.clientName || 'YOUR TEAM';
+    const title = (s.theme.title || 'FAMILY FEUD');
+    const parts = title.split(' ');
+    const last = parts.pop();
+    const first = parts.join(' ');
+    const bulbs = '<span class="b"></span>'.repeat(18);
+    return `
+      <div class="intro-screen">
+        <div class="intro-rays"></div>
+        <div class="intro-flash f1"></div>
+        <div class="intro-flash f2"></div>
+        <div class="intro-bulbs top">${bulbs}</div>
+        <div class="intro-bulbs bottom">${bulbs}</div>
+        <div class="intro-ready">GET READY FOR</div>
+        <div class="intro-brand">TEAMBUILDING ROI</div>
+        <div class="intro-title">${escapeHtml(first)} <span class="accent">${escapeHtml(last)}!</span></div>
+        <div class="intro-client"><small>PRESENTED FOR</small>${escapeHtml(client)}</div>
       </div>`;
   }
 

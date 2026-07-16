@@ -14,6 +14,11 @@
   function bank() { return S().questions[tab]; }
 
   function render() {
+    // Live question counts on the tabs
+    const q = S().questions;
+    $('tabs').querySelector('[data-t="main"]').textContent = `Main Game (${q.main.length})`;
+    $('tabs').querySelector('[data-t="fast"]').textContent = `Speed Round (${q.fast.length})`;
+
     const list = $('list');
     const qs = bank();
     list.innerHTML = qs.map((q, qi) => qCard(q, qi)).join('') || '<p class="sum">No questions yet. Click “Add Question”.</p>';

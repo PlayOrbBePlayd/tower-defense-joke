@@ -1,6 +1,8 @@
-/* Default question library. Edit freely in the in-app Editor, or replace via
- * Import. Points should ideally sum near 100 for each main question (survey
- * style), but the app does not enforce it. */
+/* Default question library — 10 main-game questions + 8 speed-round (Fast
+ * Money) questions. These are fun, general-audience starters: edit, reorder,
+ * or replace ALL of them per client in the in-app Editor (editor.html), or
+ * swap whole sets via Import/Export JSON. Points should ideally sum near 100
+ * for each main question (survey style), but the app does not enforce it. */
 window.FF_DEFAULT_QUESTIONS = {
   main: [
     {
@@ -15,25 +17,25 @@ window.FF_DEFAULT_QUESTIONS = {
       ],
     },
     {
-      q: "Name a food people are embarrassed to admit they love.",
+      q: "Name something people do in a boring meeting.",
       answers: [
-        { text: "Fast food", points: 30 },
-        { text: "Pineapple on pizza", points: 22 },
-        { text: "Instant ramen", points: 17 },
-        { text: "Canned / boxed mac & cheese", points: 13 },
-        { text: "Gas station snacks", points: 10 },
-        { text: "Ketchup on everything", points: 8 },
+        { text: "Check their phone", points: 32 },
+        { text: "Doodle", points: 22 },
+        { text: "Daydream / zone out", points: 18 },
+        { text: "Answer emails", points: 13 },
+        { text: "Snack", points: 8 },
+        { text: "Fall asleep", points: 7 },
       ],
     },
     {
-      q: "Name something you'd find in a teenager's bedroom.",
+      q: "Name something everyone 'borrows' from the office and never returns.",
       answers: [
-        { text: "Dirty laundry / clothes on floor", points: 28 },
-        { text: "Phone / charger", points: 23 },
-        { text: "Posters", points: 16 },
-        { text: "Snacks / dishes", points: 13 },
-        { text: "Gaming console", points: 11 },
-        { text: "Headphones", points: 9 },
+        { text: "Pens", points: 35 },
+        { text: "Notepads / sticky notes", points: 21 },
+        { text: "A charger", points: 16 },
+        { text: "A stapler", points: 12 },
+        { text: "Coffee mugs", points: 9 },
+        { text: "Scissors", points: 7 },
       ],
     },
     {
@@ -67,6 +69,50 @@ window.FF_DEFAULT_QUESTIONS = {
         { text: "An ugly baby / pet", points: 12 },
         { text: "A coworker's idea", points: 9 },
         { text: "A haircut", points: 6 },
+      ],
+    },
+    {
+      q: "Name something people forget when leaving the house.",
+      answers: [
+        { text: "Phone", points: 30 },
+        { text: "Keys", points: 26 },
+        { text: "Wallet / purse", points: 19 },
+        { text: "To lock the door", points: 10 },
+        { text: "Lunch", points: 8 },
+        { text: "Umbrella", points: 7 },
+      ],
+    },
+    {
+      q: "Name a skill people claim on their resume but don't really have.",
+      answers: [
+        { text: "Excel / spreadsheets", points: 28 },
+        { text: "A foreign language", points: 24 },
+        { text: "Leadership", points: 17 },
+        { text: "'Detail-oriented'", points: 13 },
+        { text: "Public speaking", points: 10 },
+        { text: "Photoshop", points: 8 },
+      ],
+    },
+    {
+      q: "Name a food people are embarrassed to admit they love.",
+      answers: [
+        { text: "Fast food", points: 30 },
+        { text: "Pineapple on pizza", points: 22 },
+        { text: "Instant ramen", points: 17 },
+        { text: "Canned / boxed mac & cheese", points: 13 },
+        { text: "Gas station snacks", points: 10 },
+        { text: "Ketchup on everything", points: 8 },
+      ],
+    },
+    {
+      q: "Name a place people say they'll visit 'someday' but never do.",
+      answers: [
+        { text: "Paris / Europe", points: 31 },
+        { text: "Hawaii", points: 23 },
+        { text: "The gym", points: 18 },
+        { text: "Grandma's house", points: 11 },
+        { text: "The dentist", points: 9 },
+        { text: "The Grand Canyon", points: 8 },
       ],
     },
   ],
@@ -104,6 +150,27 @@ window.FF_DEFAULT_QUESTIONS = {
       answers: [
         { text: "30", points: 30 }, { text: "18", points: 26 },
         { text: "21", points: 22 }, { text: "40", points: 14 }, { text: "13", points: 8 },
+      ],
+    },
+    {
+      q: "Name a food you eat with your hands.",
+      answers: [
+        { text: "Pizza", points: 38 }, { text: "Burgers", points: 26 },
+        { text: "Tacos", points: 17 }, { text: "Wings", points: 12 }, { text: "Fries", points: 7 },
+      ],
+    },
+    {
+      q: "Name something that flies.",
+      answers: [
+        { text: "A bird", points: 41 }, { text: "An airplane", points: 29 },
+        { text: "Time", points: 13 }, { text: "A kite", points: 10 }, { text: "A bee", points: 7 },
+      ],
+    },
+    {
+      q: "Name an excuse people give for missing a meeting.",
+      answers: [
+        { text: "Stuck in traffic", points: 31 }, { text: "Felt sick", points: 25 },
+        { text: "Forgot / didn't see the invite", points: 20 }, { text: "Double-booked", points: 15 }, { text: "Internet was down", points: 9 },
       ],
     },
   ],
