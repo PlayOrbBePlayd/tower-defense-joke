@@ -25,8 +25,15 @@
     $('mainPanel').classList.toggle('hidden', isFast || isEvent);
     $('fastPanel').classList.toggle('hidden', !isFast);
     $('eventPanel').classList.toggle('hidden', !isEvent);
-    // Event tab drives the board to the leaderboard; others map 1:1.
-    Store.patch((s) => { s.boardMode = isEvent ? 'leaderboard' : mode; });
+    // Event tab drives the board to the leaderboard. "Main Game" in event mode
+    // opens on the round's MATCHUP screen until play/pass has decided control —
+    // never spoiling the question or the board. After the face-off it goes
+    // straight to the answer board as before.
+    Store.patch((s) => {
+      let bm = isEvent ? 'leaderboard' : mode;
+      if (mode === 'main' && s.event.on && (!s.event.faceoff || s.event.faceoff.control == null)) bm = 'matchup';
+      s.boardMode = bm;
+    });
     if (isEvent) buildRoster();
     Sound.click();
   }
@@ -466,7 +473,9 @@
   /* ---------------- sync from other windows ---------------- */
   function syncTabs() {
     const s = S();
-    const tab = s.boardMode === 'leaderboard' ? 'event' : s.boardMode;
+    const tab = s.boardMode === 'leaderboard' ? 'event'
+      : (s.boardMode === 'matchup' || s.boardMode === 'question') ? 'main'
+      : s.boardMode;
     $('modeTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.mode === tab));
     $('mainPanel').classList.toggle('hidden', s.boardMode === 'fast' || s.boardMode === 'leaderboard');
     $('fastPanel').classList.toggle('hidden', s.boardMode !== 'fast');
