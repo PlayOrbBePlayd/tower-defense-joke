@@ -130,12 +130,13 @@ of Host Control's Main Game panel walks you through it:
    Round matchups** editor (a pair of dropdowns per round).
 2. **2 · Question** — the board shows JUST the question, huge, with "HANDS ON
    BUZZERS…" flashing. The two players race to buzz in.
-3. **Buzzed first** — tap whichever team hit the buzzer first (the two buttons are
-   pre-labeled with this round's teams). The board announces "🔔 TEAM BUZZED IN!".
-4. After their guess, hit **▶ PLAY** (they keep the board) or **⤿ PASS** (the other
-   team takes it). The board announces "★ TEAM HAS CONTROL!".
-5. **3 · Reveal Board** — the answer board appears with a green "has control" chip,
-   and you run the round as usual.
+3. **3 · Reveal Board** (green) — the answer board appears with the answers
+   still hidden.
+4. **Buzzed first** — tap whichever team hit the buzzer first (the two buttons are
+   pre-labeled with this round's teams).
+5. After their guess, hit **▶ PLAY** (they keep the board) or **⤿ PASS** (the other
+   team takes it). A green "★ TEAM HAS CONTROL" chip appears above the board, and
+   you run the round as usual.
 
 The **↺** button resets the face-off, and **Next Round** clears it automatically.
 Use **◀ Prev Round / Next Round ▶** in the award bar to step the round (and its
