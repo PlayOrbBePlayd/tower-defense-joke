@@ -14,7 +14,7 @@
 (function (global) {
   'use strict';
 
-  const LS_KEY = 'ff_state_v4';
+  const LS_KEY = 'ff_state_v5';
   const CHANNEL = 'family-feud-live';
 
   // ---- Default content ------------------------------------------------------
@@ -30,9 +30,12 @@
   };
 
   const DEFAULT_STATE = {
-    v: 4,
+    v: 5,
     clientName: 'TeamBuilding ROI',
     theme: clone(DEFAULT_THEME),
+
+    // Show-open intro reveal: bump introId to (re)play it on the board.
+    introId: 0,
 
     teams: [
       { name: 'TEAM 1', score: 0 },

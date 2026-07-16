@@ -95,6 +95,18 @@ For same-device use and as a shareable frontend, publish to GitHub Pages:
 
 ---
 
+## The show-open intro 🎬
+
+Kick off every event with an 8-second full-screen reveal on the board — spinning
+spotlight rays, chasing marquee bulbs, screen strobes, "TEAMBUILDING ROI /
+FAMILY FEUD!" slamming in with confetti and a fanfare, then a gold banner with
+the client's name.
+
+- In **Host Control**, type the **Client name** at the top of the sidebar
+  (it saves instantly and also lives in Branding), then hit **🎬 PLAY INTRO!**
+- The board plays the sequence and automatically returns to the title screen
+  after 8 seconds. Press the button again anytime to replay it.
+
 ## Running a big event — many teams, many rounds 🏆
 
 For a large game (e.g. **12 teams across 10 rounds**), use **Event / Tournament mode**

@@ -32,6 +32,20 @@
   }
 
   /* ---------------- Sidebar ---------------- */
+  // Show-open intro: plays the 8s reveal on the board, then returns to the
+  // title screen automatically. Client name is baked into the reveal.
+  let introTO = null;
+  $('ctlClientName').value = S().clientName || '';
+  $('ctlClientName').oninput = () => Store.patch((s) => { s.clientName = $('ctlClientName').value; });
+  $('playIntro').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'intro'; s.introId = (s.introId || 0) + 1; });
+    toast('🎬 Intro rolling on the board!');
+    clearTimeout(introTO);
+    introTO = setTimeout(() => {
+      if (S().boardMode === 'intro') { Store.patch((s) => { s.boardMode = 'logo'; }); syncTabs(); }
+    }, 8400);
+  };
+
   $('toLogo').onclick = () => { Store.patch((s) => { s.boardMode = 'logo'; }); syncTabs(); };
   $('toMain').onclick = () => { Store.patch((s) => { s.boardMode = 'main'; }); switchPanel('main'); };
   $('toFast').onclick = () => { Store.patch((s) => { s.boardMode = 'fast'; }); switchPanel('fast'); };
@@ -361,7 +375,11 @@
     $('eventPanel').classList.toggle('hidden', s.boardMode !== 'leaderboard');
   }
 
-  Store.subscribe(() => { renderMain(); renderStrikeDots(); $('fmTotal').textContent = fastTotal(); updateEventUI(); });
+  Store.subscribe(() => {
+    renderMain(); renderStrikeDots(); $('fmTotal').textContent = fastTotal(); updateEventUI();
+    const cn = $('ctlClientName');
+    if (cn && document.activeElement !== cn) cn.value = S().clientName || '';
+  });
 
   function boot() {
     renderTeams();
