@@ -144,12 +144,12 @@
     cue(4850, () => {
       Sound.fanfare();
       const t = Store.get().theme;
-      Confetti.fire(confettiCanvas, { colors: [t.accent, t.primary, '#ffffff', '#3ce88a'], count: 240 });
+      Confetti.fire(confettiCanvas, { colors: [t.accent, t.primary, '#ffffff', '#3ce88a'], count: 180 });
     });
     cue(6650, () => {
       Sound.reveal();
       const t = Store.get().theme;
-      Confetti.fire(confettiCanvas, { colors: [t.accent, '#ffffff'], count: 160 });
+      Confetti.fire(confettiCanvas, { colors: [t.accent, '#ffffff'], count: 120 });
     });
   }
 
@@ -162,7 +162,7 @@
     const bulbs = '<span class="b"></span>'.repeat(18);
     const sideBulbs = '<span class="b"></span>'.repeat(10);
     let sparks = '';
-    for (let i = 0; i < 28; i++) {
+    for (let i = 0; i < 20; i++) {
       sparks += `<span class="sp" style="left:${(2 + Math.random() * 96).toFixed(1)}%;top:${(4 + Math.random() * 90).toFixed(1)}%;animation-delay:${(Math.random() * 1.8).toFixed(2)}s;animation-duration:${(0.9 + Math.random() * 1.5).toFixed(2)}s"></span>`;
     }
     return `

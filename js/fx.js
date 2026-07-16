@@ -18,8 +18,10 @@
       }
     }
     const DPR = Math.min(global.devicePixelRatio || 1, 2);
-    canvas.width = innerWidth * DPR;
-    canvas.height = innerHeight * DPR;
+    const W = Math.round(innerWidth * DPR), H = Math.round(innerHeight * DPR);
+    if (canvas.width !== W || canvas.height !== H) {
+      canvas.width = W; canvas.height = H;   // realloc only on real resize
+    }
     ctx = canvas.getContext('2d');
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
