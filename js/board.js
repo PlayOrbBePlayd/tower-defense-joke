@@ -154,13 +154,22 @@
     const last = parts.pop();
     const first = parts.join(' ');
     const bulbs = '<span class="b"></span>'.repeat(18);
+    const sideBulbs = '<span class="b"></span>'.repeat(10);
+    let sparks = '';
+    for (let i = 0; i < 28; i++) {
+      sparks += `<span class="sp" style="left:${(2 + Math.random() * 96).toFixed(1)}%;top:${(4 + Math.random() * 90).toFixed(1)}%;animation-delay:${(Math.random() * 1.8).toFixed(2)}s;animation-duration:${(0.9 + Math.random() * 1.5).toFixed(2)}s"></span>`;
+    }
     return `
       <div class="intro-screen">
         <div class="intro-rays"></div>
+        <div class="intro-rays r2"></div>
+        <div class="intro-sparkles">${sparks}</div>
         <div class="intro-flash f1"></div>
         <div class="intro-flash f2"></div>
         <div class="intro-bulbs top">${bulbs}</div>
         <div class="intro-bulbs bottom">${bulbs}</div>
+        <div class="intro-bulbs left">${sideBulbs}</div>
+        <div class="intro-bulbs right">${sideBulbs}</div>
         <div class="intro-count"><span>3</span><span>2</span><span>1</span></div>
         <div class="intro-ready">GET READY FOR</div>
         <div class="intro-brand">TEAMBUILDING ROI</div>
