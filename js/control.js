@@ -65,18 +65,16 @@
   $('toMain').onclick = () => { Store.patch((s) => { s.boardMode = 'main'; }); switchPanel('main'); };
   $('toFast').onclick = () => { Store.patch((s) => { s.boardMode = 'fast'; }); switchPanel('fast'); };
   $('celebrate').onclick = () => { Store.fx('confetti'); toast('🎊 Celebration!'); };
+  // Factory reset — wipes EVERYTHING back to defaults (scores, teams,
+  // matchups, questions, branding, client name) for a brand-new game.
+  // Password-protected so it can't be hit by accident mid-event.
   $('resetAll').onclick = () => {
-    if (confirm('Reset ALL scores, rounds and fast money to a clean slate? (Questions & branding are kept.)')) {
-      Store.patch((s) => {
-        s.teams.forEach((t) => (t.score = 0));
-        s.main.strikes = 0; s.main.bank = 0; s.main.awardTeam = null; s.main.activeTeam = null;
-        s.main.showStrikeBig = false;
-        s.fast.p1 = Store.emptyFast(); s.fast.p2 = Store.emptyFast();
-        s.fast.showTotals = false; s.fast.timerLabel = '';
-        Store.initRound();
-      });
-      toast('Board reset');
-    }
+    const pw = prompt('⚠ FULL RESET — this wipes scores, teams, matchups, questions and branding back to defaults.\n\nEnter the reset password to continue:');
+    if (pw === null) return;                      // cancelled
+    if (pw.trim() !== 'TBROI') { alert('Incorrect password — nothing was reset.'); return; }
+    Store.reset();
+    // Reload so every control rebuilds cleanly from the fresh state.
+    location.reload();
   };
   $('toggleSound').onclick = () => {
     Store.patch((s) => { s.sound = s.sound === false ? true : false; });
@@ -546,6 +544,7 @@
 
     // Event award bar actions (in Main panel)
     $('eaNext').onclick = eventNextRound;
+    $('eaPrev').onclick = eventPrevRound;
     $('eaLeaderboard').onclick = () => { Store.patch((st) => { st.boardMode = 'leaderboard'; st.event.showFinal = false; }); syncTabs(); };
   }
 
@@ -617,6 +616,24 @@
     $('evRound').value = S().event.round;
     renderMain(); refreshRoster(); updateEventUI(); syncTabs();
     toast('Round ' + S().event.round + ' — leaderboard up');
+  }
+
+  // Rewind one round: steps the round counter and question back, clears the
+  // face-off, and shows the leaderboard. Scores are untouched — adjust them
+  // in the roster if a round needs to be un-awarded.
+  function eventPrevRound() {
+    Store.patch((s) => {
+      s.event.round = Math.max(1, s.event.round - 1);
+      s.main.questionIndex = Math.max(0, s.main.questionIndex - 1);
+      Store.initRound();
+      s.main.showStrikeBig = false;
+      s.event.faceoff = { buzzed: null, control: null };
+      s.main.activeTeam = null;
+      s.boardMode = 'leaderboard';
+    });
+    $('evRound').value = S().event.round;
+    renderMain(); refreshRoster(); updateEventUI(); syncTabs();
+    toast('Rewound to Round ' + S().event.round);
   }
 
   // Show/refresh event UI: award bar in Main, classic controls hidden in event mode.

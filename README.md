@@ -130,6 +130,8 @@ of Host Control's Main Game panel walks you through it:
    and you run the round as usual.
 
 The **↺** button resets the face-off, and **Next Round** clears it automatically.
+Use **◀ Prev Round / Next Round ▶** in the award bar to step the round (and its
+question) in either direction — scores are never touched by stepping.
 
 ## Running a big event — many teams, many rounds 🏆
 
@@ -154,6 +156,11 @@ directly in the roster (± buttons or type a value) to match your house rules �
 winner per round, multiple teams scoring, or head-to-head within a round all work.
 
 To go back to a classic 2-team head-to-head game, just turn **Event mode OFF**.
+
+**Starting a brand-new game:** the sidebar's **⚠ Reset Everything** performs a
+full factory reset — scores, teams, matchups, questions, and branding all return
+to defaults. It's password-protected (ask TeamBuilding ROI for the reset
+password) so it can't be triggered accidentally mid-event.
 
 ## Customization
 
