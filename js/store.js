@@ -39,6 +39,14 @@
       { name: 'TEAM 2', score: 0 },
     ],
 
+    // ---- Event / tournament mode (many teams, multiple rounds, leaderboard) ----
+    event: {
+      on: false,
+      totalRounds: 10,
+      round: 1,
+      showFinal: false,        // show the FINAL STANDINGS screen
+    },
+
     // ---- Main game round ----
     main: {
       questionIndex: 0,
@@ -113,6 +121,7 @@
     merged.theme = Object.assign({}, base.theme, s.theme || {});
     merged.main = Object.assign({}, base.main, s.main || {});
     merged.fast = Object.assign({}, base.fast, s.fast || {});
+    merged.event = Object.assign({}, base.event, s.event || {});
     merged.teams = s.teams && s.teams.length ? s.teams : base.teams;
     if (!s.questions || !s.questions.main || !s.questions.main.length) {
       merged.questions = global.FF_DEFAULT_QUESTIONS
@@ -217,6 +226,16 @@
 
     initRound() { initRound(state); },
     emptyFast,
+
+    // Grow/shrink the team roster to exactly n teams, preserving existing
+    // names & scores. New teams get sensible default names.
+    setTeamCount(n) {
+      n = Math.max(1, Math.min(24, n | 0));
+      const t = state.teams;
+      while (t.length < n) t.push({ name: 'TEAM ' + (t.length + 1), score: 0 });
+      if (t.length > n) t.length = n;
+    },
+
     DEFAULT_THEME,
     LS_KEY,
 

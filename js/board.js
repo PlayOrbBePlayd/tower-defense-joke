@@ -31,13 +31,24 @@
     const s = Store.get();
     Sound.setEnabled(s.sound !== false);
 
-    // Header scores
-    document.getElementById('t0name').textContent = s.teams[0].name;
-    document.getElementById('t1name').textContent = s.teams[1].name;
-    document.getElementById('t0score').textContent = s.teams[0].score;
-    document.getElementById('t1score').textContent = s.teams[1].score;
-    document.getElementById('pod0').classList.toggle('active', s.main.activeTeam === 0 && s.boardMode === 'main');
-    document.getElementById('pod1').classList.toggle('active', s.main.activeTeam === 1 && s.boardMode === 'main');
+    // Header — event mode repurposes the two pods for LEADER + ROUND readout.
+    const pod0 = document.getElementById('pod0'), pod1 = document.getElementById('pod1');
+    if (s.event.on) {
+      const ranked = rankedTeams(s);
+      const leader = ranked[0];
+      document.getElementById('t0name').textContent = '🏆 ' + (leader ? leader.name : '—');
+      document.getElementById('t0score').textContent = leader ? leader.score : 0;
+      document.getElementById('t1name').textContent = 'ROUND';
+      document.getElementById('t1score').textContent = s.event.round + '/' + s.event.totalRounds;
+      pod0.classList.remove('active'); pod1.classList.remove('active');
+    } else {
+      document.getElementById('t0name').textContent = s.teams[0].name;
+      document.getElementById('t1name').textContent = s.teams[1].name;
+      document.getElementById('t0score').textContent = s.teams[0].score;
+      document.getElementById('t1score').textContent = s.teams[1].score;
+      pod0.classList.toggle('active', s.main.activeTeam === 0 && s.boardMode === 'main');
+      pod1.classList.toggle('active', s.main.activeTeam === 1 && s.boardMode === 'main');
+    }
 
     // One-shot effects (confetti / fanfare) broadcast from control
     if (s._fx && s._fx.id !== prev.fxId) {
@@ -48,6 +59,7 @@
     // Mode routing
     if (s.boardMode === 'main') renderMain(s);
     else if (s.boardMode === 'fast') renderFast(s);
+    else if (s.boardMode === 'leaderboard') renderLeaderboard(s);
     else renderLogo(s);
 
     // Strikes big overlay (3 strikes) + single flash on each wrong answer
@@ -88,6 +100,45 @@
         <div class="sub" data-brand-subtitle>${escapeHtml(s.theme.subtitle || '')}</div>
         <div class="marquee">${'<span class="bulb"></span>'.repeat(9)}</div>
       </div>`;
+  }
+
+  /* ---------------- LEADERBOARD (event mode) ---------------- */
+  function rankedTeams(s) {
+    return s.teams.map((t, i) => ({ name: t.name, score: t.score, i }))
+      .sort((a, b) => b.score - a.score || a.i - b.i);
+  }
+
+  function renderLeaderboard(s) {
+    const ranked = rankedTeams(s);
+    const isFinal = !!s.event.showFinal;
+    const key = JSON.stringify(ranked.map((t) => [t.name, t.score])) + '|' + isFinal + '|' + s.event.round + '|' + s.event.totalRounds;
+    if (prev.lbKey !== key || prev.boardMode !== 'leaderboard') {
+      const title = isFinal ? 'FINAL STANDINGS'
+        : (s.event.round > s.event.totalRounds ? 'FINAL STANDINGS' : 'LEADERBOARD');
+      const sub = isFinal ? '🎉 CONGRATULATIONS! 🎉'
+        : `ROUND ${Math.min(s.event.round, s.event.totalRounds)} OF ${s.event.totalRounds}`;
+      const medals = ['gold', 'silver', 'bronze'];
+      const rows = ranked.map((t, idx) => `
+        <div class="lb-row ${idx < 3 ? 'top ' + medals[idx] : ''} ${isFinal && idx === 0 ? 'champ' : ''}">
+          <span class="lb-rank">${idx + 1}</span>
+          <span class="lb-name">${escapeHtml(t.name)}</span>
+          <span class="lb-score">${t.score}</span>
+        </div>`).join('');
+      stage.innerHTML = `
+        <div class="lb-wrap ${isFinal ? 'is-final' : ''}">
+          <div class="lb-title">${title}</div>
+          <div class="lb-sub">${sub}</div>
+          <div class="lb-list ${ranked.length <= 7 ? 'single' : ''}" style="--rows:${ranked.length <= 7 ? ranked.length : Math.ceil(ranked.length / 2)}">${rows}</div>
+        </div>`;
+      prev.boardMode = 'leaderboard';
+      prev.lbKey = key;
+      if (isFinal && prev.finalFired !== key) {
+        prev.finalFired = key;
+        Confetti.fire(confettiCanvas, { colors: [s.theme.accent, s.theme.primary, '#ffffff', '#3ce88a'], count: 260 });
+        Sound.fanfare();
+      }
+    }
+    Theme.apply();
   }
 
   /* ---------------- MAIN GAME ---------------- */

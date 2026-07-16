@@ -21,10 +21,13 @@
   });
   function switchPanel(mode) {
     $('modeTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
-    $('mainPanel').classList.toggle('hidden', mode === 'fast');
-    $('fastPanel').classList.toggle('hidden', mode !== 'fast');
-    // also switch the board to match
-    Store.patch((s) => { s.boardMode = mode; });
+    const isFast = mode === 'fast', isEvent = mode === 'event';
+    $('mainPanel').classList.toggle('hidden', isFast || isEvent);
+    $('fastPanel').classList.toggle('hidden', !isFast);
+    $('eventPanel').classList.toggle('hidden', !isEvent);
+    // Event tab drives the board to the leaderboard; others map 1:1.
+    Store.patch((s) => { s.boardMode = isEvent ? 'leaderboard' : mode; });
+    if (isEvent) buildRoster();
     Sound.click();
   }
 
@@ -351,12 +354,14 @@
   /* ---------------- sync from other windows ---------------- */
   function syncTabs() {
     const s = S();
-    $('modeTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.mode === s.boardMode));
-    $('mainPanel').classList.toggle('hidden', s.boardMode === 'fast');
+    const tab = s.boardMode === 'leaderboard' ? 'event' : s.boardMode;
+    $('modeTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.mode === tab));
+    $('mainPanel').classList.toggle('hidden', s.boardMode === 'fast' || s.boardMode === 'leaderboard');
     $('fastPanel').classList.toggle('hidden', s.boardMode !== 'fast');
+    $('eventPanel').classList.toggle('hidden', s.boardMode !== 'leaderboard');
   }
 
-  Store.subscribe(() => { renderMain(); renderStrikeDots(); $('fmTotal').textContent = fastTotal(); });
+  Store.subscribe(() => { renderMain(); renderStrikeDots(); $('fmTotal').textContent = fastTotal(); updateEventUI(); });
 
   function boot() {
     renderTeams();
@@ -368,7 +373,161 @@
     const on = S().sound !== false;
     $('toggleSound').textContent = on ? '🔊 Sound: On' : '🔇 Sound: Off';
     $('fmTimerSet').value = S().fast.timerMax || 20;
+    initEvent();
+    buildRoster();
+    updateEventUI();
     Theme.apply();
+  }
+
+  /* ---------------- EVENT / TOURNAMENT ---------------- */
+  let rosterCount = -1;
+
+  function initEvent() {
+    const s = S();
+    $('evOn').checked = s.event.on;
+    // Pre-fill a sensible event size (12) when still on the classic 2-team default.
+    $('evTeams').value = (s.event.on || s.teams.length > 2) ? s.teams.length : 12;
+    $('evRounds').value = s.event.totalRounds;
+    $('evRound').value = s.event.round;
+
+    $('evOn').onchange = () => {
+      const on = $('evOn').checked;
+      Store.patch((st) => {
+        st.event.on = on;
+        if (on) {
+          Store.setTeamCount(Math.max(2, +$('evTeams').value || 12));
+          st.event.round = 1; st.event.showFinal = false;
+          st.boardMode = 'leaderboard';
+        }
+      });
+      $('evTeams').value = S().teams.length;
+      buildRoster(); updateEventUI(); syncTabs();
+      toast(on ? 'Event mode ON' : 'Event mode off');
+    };
+    $('evTeams').onchange = () => { Store.patch(() => Store.setTeamCount(+$('evTeams').value || 12)); buildRoster(); updateEventUI(); };
+    $('evRounds').onchange = () => { Store.patch((st) => { st.event.totalRounds = Math.max(1, +$('evRounds').value || 10); }); updateEventUI(); };
+    $('evRound').onchange = () => { Store.patch((st) => { st.event.round = Math.max(1, +$('evRound').value || 1); }); updateEventUI(); };
+    $('evPrevRound').onclick = () => { Store.patch((st) => { st.event.round = Math.max(1, st.event.round - 1); }); $('evRound').value = S().event.round; updateEventUI(); };
+    $('evNextRound').onclick = () => { Store.patch((st) => { st.event.round = Math.min(st.event.totalRounds, st.event.round + 1); }); $('evRound').value = S().event.round; updateEventUI(); };
+
+    $('evShowLb').onclick = () => { Store.patch((st) => { st.boardMode = 'leaderboard'; st.event.showFinal = false; }); syncTabs(); };
+    $('evShowFinal').onclick = () => { Store.patch((st) => { st.boardMode = 'leaderboard'; st.event.showFinal = true; }); syncTabs(); Store.fx('confetti'); };
+    $('evSortNames').onclick = () => { Store.patch((st) => { st.teams.sort((a, b) => a.name.localeCompare(b.name)); }); buildRoster(); updateEventUI(); };
+    $('evResetScores').onclick = () => {
+      if (!confirm('Reset ALL team scores to 0 and go back to Round 1?')) return;
+      Store.patch((st) => { st.teams.forEach((t) => (t.score = 0)); st.event.round = 1; st.event.showFinal = false; Store.initRound(); });
+      $('evRound').value = 1; buildRoster(); updateEventUI(); toast('Scores reset');
+    };
+
+    // Event award bar actions (in Main panel)
+    $('eaNext').onclick = eventNextRound;
+    $('eaLeaderboard').onclick = () => { Store.patch((st) => { st.boardMode = 'leaderboard'; st.event.showFinal = false; }); syncTabs(); };
+  }
+
+  // Build the roster editor (only on structural change — preserves input focus otherwise).
+  function buildRoster() {
+    const s = S();
+    const rankOf = rankMap(s);
+    $('evRoster').innerHTML = s.teams.map((t, i) => `
+      <div class="ev-team">
+        <span class="rk" id="evrk${i}">${rankOf[i]}</span>
+        <input class="nm" data-i="${i}" value="${escAttr(t.name)}" />
+        <div class="sc-wrap">
+          <button class="mini" data-dec="${i}">−</button>
+          <input class="v" type="number" data-i="${i}" value="${t.score}" />
+          <button class="mini" data-inc="${i}">+</button>
+        </div>
+      </div>`).join('');
+    $('evRoster').querySelectorAll('input.nm').forEach((inp) => {
+      inp.oninput = () => Store.patch((st) => { st.teams[+inp.dataset.i].name = inp.value; });
+    });
+    $('evRoster').querySelectorAll('input.v').forEach((inp) => {
+      inp.oninput = () => Store.patch((st) => { st.teams[+inp.dataset.i].score = Math.max(0, +inp.value || 0); });
+    });
+    $('evRoster').querySelectorAll('[data-dec]').forEach((b) => {
+      b.onclick = () => { Store.patch((st) => { const t = st.teams[+b.dataset.dec]; t.score = Math.max(0, t.score - 5); }); refreshRoster(); };
+    });
+    $('evRoster').querySelectorAll('[data-inc]').forEach((b) => {
+      b.onclick = () => { Store.patch((st) => { st.teams[+b.dataset.inc].score += 5; }); refreshRoster(); };
+    });
+    rosterCount = s.teams.length;
+  }
+
+  // Update scores/ranks without rebuilding (keeps focus while typing).
+  function refreshRoster() {
+    const s = S();
+    const rankOf = rankMap(s);
+    s.teams.forEach((t, i) => {
+      const rk = document.getElementById('evrk' + i); if (rk) rk.textContent = rankOf[i];
+      const v = document.querySelector('#evRoster input.v[data-i="' + i + '"]');
+      if (v && document.activeElement !== v) v.value = t.score;
+    });
+  }
+
+  function rankMap(s) {
+    const ranked = s.teams.map((t, i) => ({ i, score: t.score })).sort((a, b) => b.score - a.score || a.i - b.i);
+    const m = {}; ranked.forEach((t, idx) => { m[t.i] = idx + 1; }); return m;
+  }
+
+  function eventAward(i) {
+    const s = S();
+    if (s.main.awardTeam != null) { toast('Already awarded — press Next Round'); return; }
+    const bank = s.main.bank;
+    Store.patch((st) => { st.teams[i].score += bank; st.main.awardTeam = i; });
+    Store.fx('confetti');
+    toast('+' + bank + ' → ' + s.teams[i].name);
+    updateEventUI();
+  }
+
+  function eventNextRound() {
+    Store.patch((s) => {
+      s.event.round = Math.min(s.event.totalRounds, s.event.round + 1);
+      s.main.questionIndex = Math.min(s.questions.main.length - 1, s.main.questionIndex + 1);
+      Store.initRound();
+      s.main.showStrikeBig = false;
+      s.boardMode = 'leaderboard';
+    });
+    $('evRound').value = S().event.round;
+    renderMain(); refreshRoster(); updateEventUI(); syncTabs();
+    toast('Round ' + S().event.round + ' — leaderboard up');
+  }
+
+  // Show/refresh event UI: award bar in Main, classic controls hidden in event mode.
+  function updateEventUI() {
+    const s = S();
+    const on = s.event.on;
+    // Classic 2-team controls hide in event mode
+    $('teamsRow').classList.toggle('hidden', on);
+    $('awardT0').classList.toggle('hidden', on);
+    $('awardT1').classList.toggle('hidden', on);
+    // Event award bar (lives in Main panel)
+    const bar = $('eventAwardBar');
+    bar.classList.toggle('hidden', !on);
+    if (on) {
+      $('eaRound').textContent = 'Round ' + s.event.round + ' of ' + s.event.totalRounds;
+      $('eaBank').textContent = s.main.bank;
+      const awarded = s.main.awardTeam;
+      if (rosterCount !== s.teams.length || $('eaGrid').childElementCount !== s.teams.length) buildAwardGrid();
+      $('eaGrid').querySelectorAll('.ea-team').forEach((btn) => {
+        const i = +btn.dataset.i;
+        btn.querySelector('.s').textContent = s.teams[i].score;
+        btn.querySelector('.nm').textContent = s.teams[i].name;
+        btn.classList.toggle('just-won', awarded === i);
+        btn.disabled = awarded != null;
+        btn.style.opacity = (awarded != null && awarded !== i) ? '.5' : '1';
+      });
+      refreshRoster();
+    }
+    // keep setup fields in step
+    if (document.activeElement !== $('evRound')) $('evRound').value = s.event.round;
+  }
+
+  function buildAwardGrid() {
+    const s = S();
+    $('eaGrid').innerHTML = s.teams.map((t, i) => `
+      <button class="ea-team" data-i="${i}"><span class="nm">${escHtml(t.name)}</span><span class="s">${t.score}</span></button>`).join('');
+    $('eaGrid').querySelectorAll('.ea-team').forEach((b) => { b.onclick = () => eventAward(+b.dataset.i); });
+    rosterCount = s.teams.length;
   }
 
   /* ---------------- utils ---------------- */

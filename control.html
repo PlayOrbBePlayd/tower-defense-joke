@@ -23,6 +23,7 @@
         <button data-mode="logo">Title</button>
         <button data-mode="main" class="active">Main Game</button>
         <button data-mode="fast">Fast Money</button>
+        <button data-mode="event">Event</button>
       </div>
       <button class="btn blue sm" id="openBoard">⧉ Open Board</button>
     </div>
@@ -59,6 +60,19 @@
             <button class="btn green" id="awardT1">Award → Team 2</button>
             <button class="btn gold" id="newRound">↺ Reset Round</button>
           </div>
+
+          <!-- Event-mode award bar (shown only when Event mode is ON) -->
+          <div class="event-award hidden" id="eventAwardBar">
+            <div class="ea-head">
+              <span class="ea-round" id="eaRound">Round 1 of 10</span>
+              <span class="ea-bank">Bank to award: <b id="eaBank">0</b></span>
+              <span class="ea-spacer"></span>
+              <button class="btn ghost sm" id="eaLeaderboard">Show Leaderboard</button>
+              <button class="btn gold sm" id="eaNext">Next Round ▶</button>
+            </div>
+            <div class="ea-hint">Tap the team that won this round to bank the points:</div>
+            <div class="ea-grid" id="eaGrid"></div>
+          </div>
         </div>
 
         <!-- FAST MONEY PANEL -->
@@ -91,6 +105,43 @@
             <div class="fm-total-big" id="fmTotal" style="flex:1">0</div>
             <button class="btn green" id="fmWin">🎉 Celebrate Win</button>
           </div>
+        </div>
+
+        <!-- EVENT / TOURNAMENT PANEL -->
+        <div class="panel hidden" id="eventPanel">
+          <h2>🏆 Event / Tournament</h2>
+          <p class="hint" style="margin-bottom:14px">
+            Run many teams across multiple rounds with a running leaderboard. Set it up here,
+            then play each round in <strong>Main Game</strong> and tap the winning team to bank points.
+          </p>
+
+          <div class="ev-setup">
+            <label class="ev-toggle">
+              <input type="checkbox" id="evOn" /> <span>Event mode ON</span>
+            </label>
+            <div class="ev-num"><label class="fld">Teams</label><input type="number" id="evTeams" min="2" max="24" value="12" /></div>
+            <div class="ev-num"><label class="fld">Total rounds</label><input type="number" id="evRounds" min="1" max="30" value="10" /></div>
+            <div class="ev-num"><label class="fld">Current round</label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <button class="btn ghost sm" id="evPrevRound">◀</button>
+                <input type="number" id="evRound" min="1" value="1" style="width:64px;text-align:center" />
+                <button class="btn ghost sm" id="evNextRound">▶</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ev-actions">
+            <button class="btn gold sm" id="evShowLb">📊 Show Leaderboard</button>
+            <button class="btn green sm" id="evShowFinal">🏆 Show Final Standings</button>
+            <button class="btn ghost sm" id="evSortNames">A→Z names</button>
+            <button class="btn red sm" id="evResetScores">Reset all scores</button>
+          </div>
+
+          <div class="ev-roster-head">
+            <span>Team roster &amp; scores</span>
+            <span class="hint" style="margin:0">names sync to the board live</span>
+          </div>
+          <div class="ev-roster" id="evRoster"></div>
         </div>
       </div>
 
