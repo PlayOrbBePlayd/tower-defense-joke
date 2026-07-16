@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control — Family Feud</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%231746c9%22/%3E%3Ctext x=%2250%22 y=%2272%22 font-size=%2270%22 text-anchor=%22middle%22 fill=%22%23ffc21c%22 font-family=%22Arial%22 font-weight=%22bold%22%3EF%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/control.css" />
+</head>
+<body>
+  <div class="ctrl-root">
+    <!-- Top bar -->
+    <div class="ctrl-top">
+      <div class="brand-logo" data-brand-logo></div>
+      <div class="titles">
+        <div class="t" data-brand-title>FAMILY FEUD</div>
+        <div class="s"><span data-client-name>Default Client</span> · HOST CONTROL</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="connection" id="syncBtn" title="Cross-device sync"><span class="dot-live" id="syncDot"></span> <span id="syncLabel">Same-device</span></button>
+      <div class="mode-tabs" id="modeTabs">
+        <button data-mode="logo">Title</button>
+        <button data-mode="main" class="active">Main Game</button>
+        <button data-mode="fast">Fast Money</button>
+      </div>
+      <button class="btn blue sm" id="openBoard">⧉ Open Board</button>
+    </div>
+
+    <div class="ctrl-grid">
+      <!-- LEFT: mode-specific control -->
+      <div>
+        <div class="panel" id="mainPanel">
+          <!-- teams -->
+          <div class="teams-row" id="teamsRow"></div>
+
+          <div class="q-select-row">
+            <button class="btn ghost sm" id="prevQ">◀ Prev</button>
+            <select id="qSelect"></select>
+            <button class="btn ghost sm" id="nextQ">Next ▶</button>
+          </div>
+          <div class="q-preview" id="qPreview"></div>
+
+          <div class="ans-list" id="ansList"></div>
+
+          <div class="strike-controls">
+            <button class="btn red" id="strikeBtn">✕ STRIKE</button>
+            <div class="strike-dots" id="strikeDots"></div>
+            <button class="btn ghost sm" id="clearStrikes">Clear</button>
+            <button class="btn red sm" id="bigStrike">Show Triple ✕✕✕</button>
+            <div class="spacer" style="flex:1"></div>
+            <div class="bank-line">BANK <span class="amt" id="bankAmt">0</span></div>
+          </div>
+
+          <div class="reveal-actions">
+            <button class="btn ghost sm" id="revealAll">Reveal All</button>
+            <button class="btn ghost sm" id="hideAll">Hide All</button>
+            <button class="btn green" id="awardT0">Award → Team 1</button>
+            <button class="btn green" id="awardT1">Award → Team 2</button>
+            <button class="btn gold" id="newRound">↺ Reset Round</button>
+          </div>
+        </div>
+
+        <!-- FAST MONEY PANEL -->
+        <div class="panel hidden" id="fastPanel">
+          <h2>Fast Money — Final Round</h2>
+          <div class="fm-player-tabs">
+            <button class="btn blue" data-player="1" id="fmP1">Player 1 (on board)</button>
+            <button class="btn ghost" data-player="2" id="fmP2">Player 2</button>
+          </div>
+
+          <div class="q-select-row">
+            <label class="fld" style="margin:0">Load a saved question's answers into the picker:</label>
+          </div>
+
+          <div id="fmRows"></div>
+
+          <div class="fm-timer-row">
+            <label class="fld" style="margin:0">Timer</label>
+            <input type="number" id="fmTimerSet" value="20" style="width:80px" />
+            <button class="btn blue sm" id="fmStart">▶ Start</button>
+            <button class="btn ghost sm" id="fmStop">⏸ Stop</button>
+            <button class="btn ghost sm" id="fmReset">↺ Reset</button>
+            <input type="text" id="fmLabel" placeholder="Label (e.g. PLAYER 1)" style="flex:1;min-width:120px" />
+          </div>
+
+          <div class="reveal-actions">
+            <button class="btn ghost sm" id="fmRevealAll">Reveal All</button>
+            <button class="btn ghost sm" id="fmHideAll">Hide All</button>
+            <button class="btn gold sm" id="fmToggleTotal">Toggle Total</button>
+            <div class="fm-total-big" id="fmTotal" style="flex:1">0</div>
+            <button class="btn green" id="fmWin">🎉 Celebrate Win</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT sidebar -->
+      <div class="panel">
+        <h2>Show Controls</h2>
+        <div class="side-actions">
+          <button class="btn gold block" id="toLogo">🏆 Show Title Screen</button>
+          <button class="btn blue block" id="toMain">▶ Show Main Game</button>
+          <button class="btn blue block" id="toFast">💰 Show Fast Money</button>
+          <button class="btn green block" id="celebrate">🎊 Confetti + Fanfare</button>
+          <hr style="border-color:rgba(255,255,255,.1); margin:6px 0" />
+          <button class="btn ghost block" id="toggleSound">🔊 Sound: On</button>
+          <a class="btn ghost block" href="editor.html" target="_blank" style="text-decoration:none">✎ Edit Questions</a>
+          <a class="btn ghost block" href="settings.html" target="_blank" style="text-decoration:none">🎨 Branding & Theme</a>
+          <a class="btn ghost block" href="index.html" style="text-decoration:none">⌂ Home / Launcher</a>
+          <hr style="border-color:rgba(255,255,255,.1); margin:6px 0" />
+          <button class="btn red block" id="resetAll">⚠ Reset Everything</button>
+        </div>
+        <div class="hint">
+          <strong>Keyboard:</strong><br/>
+          <span class="kbd">1</span>–<span class="kbd">8</span> reveal answer ·
+          <span class="kbd">X</span> strike ·
+          <span class="kbd">Space</span> reveal next ·
+          <span class="kbd">C</span> confetti
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cross-device sync dialog -->
+  <div class="modal-back" id="syncModal">
+    <div class="modal">
+      <h2>🔗 Cross-device Sync</h2>
+      <p class="hint" style="margin-bottom:14px">
+        Control one screen from another device (laptop → TV, or phone → laptop).
+        Both devices open the app <strong>from the same server</strong> and use the
+        <strong>same room code</strong>. On one computer/browser you don't need this —
+        multiple windows already stay in sync automatically.
+      </p>
+      <div class="field">
+        <label class="fld">Room code (must match on every device)</label>
+        <input type="text" id="syncRoom" maxlength="12" placeholder="MAIN" />
+      </div>
+      <div class="field">
+        <label class="fld">Server address <span style="text-transform:none;color:#8b9bd0">(auto-filled when served by the game server)</span></label>
+        <input type="text" id="syncUrl" placeholder="ws://192.168.1.20:3000/ws" />
+      </div>
+      <div id="syncState" class="hint" style="margin:4px 0 14px"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn green" id="syncApply">Connect</button>
+        <button class="btn ghost" id="syncBoardLink">Copy Board link</button>
+        <button class="btn ghost" id="syncClose">Close</button>
+      </div>
+      <p class="hint" style="margin-top:14px">
+        No server yet? Cross-device needs one running. See the <strong>README</strong>
+        (“Cross-device play”) — one command locally, or a free 1-click cloud deploy.
+      </p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script>window.FF_SYNC_ROLE = 'writer';</script>
+  <script src="js/sync.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/control.js"></script>
+</body>
+</html>

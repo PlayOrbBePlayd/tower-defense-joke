@@ -1,0 +1,15 @@
+{
+  "name": "teambuilding-roi-family-feud",
+  "version": "1.0.0",
+  "description": "TeamBuilding ROI — Family Feud game show app with a separate host dashboard, board display, and real-time cross-device sync.",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
