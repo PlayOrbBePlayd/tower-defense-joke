@@ -288,6 +288,48 @@
   $('fmReset').onclick = () => { clearInterval(timerInt); const secs = +$('fmTimerSet').value || 20; Store.patch((s) => { s.fast.timerSeconds = secs; s.fast.timerMax = secs; s.fast.timerRunning = false; }); };
   $('fmLabel').oninput = () => Store.patch((s) => { s.fast.timerLabel = $('fmLabel').value; });
 
+  /* ---------------- Cross-device sync UI ---------------- */
+  const syncModal = $('syncModal');
+  $('syncBtn').onclick = () => {
+    if (window.Sync) {
+      $('syncRoom').value = Sync.getRoom();
+      $('syncUrl').value = Sync.getUrl() || '';
+    }
+    syncModal.classList.add('show');
+  };
+  $('syncClose').onclick = () => syncModal.classList.remove('show');
+  syncModal.onclick = (e) => { if (e.target === syncModal) syncModal.classList.remove('show'); };
+  $('syncApply').onclick = () => {
+    if (!window.Sync) return;
+    Sync.configure($('syncUrl').value, $('syncRoom').value);
+    toast('Connecting…');
+  };
+  $('syncBoardLink').onclick = () => {
+    const room = ($('syncRoom').value || 'MAIN').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const base = location.origin + location.pathname.replace(/[^/]*$/, '') + 'board.html';
+    const url = base + '?room=' + room + (Sync && Sync.getUrl() ? '&sync=' + encodeURIComponent(Sync.getUrl()) : '');
+    navigator.clipboard && navigator.clipboard.writeText(url);
+    $('syncState').textContent = 'Board link copied: ' + url;
+    toast('Board link copied');
+  };
+
+  function paintSync(status, st) {
+    const dot = $('syncDot'), label = $('syncLabel'), sstate = $('syncState');
+    dot.className = 'dot-live ' + status;
+    const map = { off: 'Same-device', connecting: 'Connecting…', live: 'Live · ' + (st ? st.room : ''), retry: 'Reconnecting…' };
+    label.textContent = map[status] || status;
+    if (sstate) {
+      const msgs = {
+        off: 'Not using a server. Multiple windows on THIS browser still sync automatically. To control another device, enter a server address and room, then Connect.',
+        connecting: 'Connecting to ' + (st.url || '') + ' …',
+        live: '✅ Connected to room “' + st.room + '”. Any device on this server + room is now in sync.',
+        retry: '⚠️ Lost connection to ' + (st.url || '') + ' — retrying automatically…',
+      };
+      sstate.textContent = msgs[status] || '';
+    }
+  }
+  if (window.Sync) Sync.onStatus(paintSync);
+
   /* ---------------- Keyboard shortcuts ---------------- */
   addEventListener('keydown', (e) => {
     if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;

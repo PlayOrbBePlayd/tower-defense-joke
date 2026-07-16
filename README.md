@@ -1,4 +1,4 @@
-# Family Feud — Survey Showdown 🎪
+# TeamBuilding ROI — Family Feud 🎪
 
 A polished, browser-based **Family Feud–style game** built for live events. It runs
 as a pair of screens that stay in perfect sync:
@@ -23,10 +23,56 @@ a USB stick, a local web server). From the launcher:
    **`F`** for fullscreen.
 3. That's it. Anything you do in Control appears instantly on the Board.
 
-> **Two devices?** Host Control and Board can also run on two different computers
-> **on the same browser profile / same machine**, since sync uses the browser's
-> `BroadcastChannel` + `localStorage`. For two separate machines, mirror/extend
-> your display or run both windows on the machine driving the projector.
+> **Same computer, two windows** works with zero setup (sync uses the browser's
+> `BroadcastChannel` + `localStorage`). To control the Board from a **different
+> device** — a phone or a second laptop — see **Cross-device play** below.
+
+---
+
+## Cross-device play (control from another device) 🔗
+
+Driving the venue TV from your phone/laptop needs a small **server** running,
+because a browser can't talk directly to another device. Two easy options:
+
+### Option A — Local server at the venue (best for on-site, no accounts)
+```bash
+npm install      # first time only
+npm start
+```
+The console prints a `http://<your-ip>:3000` address. Open that URL on **both**
+the TV (Board) and your controller device (Control), on the **same Wi-Fi**. In
+Control, click the **🔗 Cross-device Sync** chip, set a **room code** (any word),
+and hit **Connect** on each device. Use **Copy Board link** to send the TV a
+ready-made link. Done — one device drives the other in real time.
+
+### Option B — Free cloud server (best for remote/hybrid, get a public link)
+Deploy the included server to Render's free tier (no credit card):
+1. Push this repo to your GitHub (already done).
+2. On [render.com](https://render.com): **New → Blueprint**, pick this repo, **Apply**.
+   It reads `render.yaml` and gives you a public `https://…onrender.com` URL.
+3. Open that URL on any device, anywhere, with the same room code.
+
+> **How sync picks a target:** when the app is opened *from the game server* it
+> auto-connects. You can also override with `?room=CODE&sync=wss://host/ws` in the
+> URL, or via the Sync dialog. Opened as plain static files (e.g. GitHub Pages) it
+> stays same-device unless you point it at a server.
+
+---
+
+## Deploy the static app to GitHub Pages 🌐
+
+For same-device use and as a shareable frontend, publish to GitHub Pages:
+
+- A workflow is included at `.github/workflows/pages.yml`. Once these changes are
+  on the **`main`** branch, open **Actions → Deploy to GitHub Pages → Run**, or
+  just push to `main`. It publishes to
+  `https://<your-user>.github.io/tower-defense-joke/`.
+- If Pages isn't enabled yet, the workflow enables it automatically on first run
+  (Settings → Pages will then show the live URL).
+
+> GitHub Pages is **static only** — it serves the app but does **not** run the
+> WebSocket server. Same-device play works from Pages; for cross-device, pair it
+> with Option A or B above (enter the server address in the Sync dialog).
 
 ---
 
@@ -89,13 +135,20 @@ board.html        Audience display
 editor.html       Question editor
 settings.html     Branding & theming
 css/              Styles (app, board, control)
-js/               store (sync), audio, theme, board, control, editor, settings, data
+js/               store, sync (WebSocket), audio, theme, board, control, editor, settings, data
+server/server.js  Node server: serves the app + relays cross-device sync
 assets/fonts/     Self-hosted web fonts (no network needed)
+package.json      npm start → runs the server
+render.yaml       One-click cloud deploy of the server
 ```
 
 ## How sync works
 
 `js/store.js` holds one shared state object. Every window persists it to
-`localStorage` and broadcasts changes over a `BroadcastChannel`, so the Control,
-Board, Editor, and Branding windows all update in real time. Nothing leaves the
-browser — refresh-safe and fully offline.
+`localStorage` and broadcasts changes over a `BroadcastChannel` — so windows in
+the **same browser** update in real time with no server, fully offline.
+
+`js/sync.js` adds an **optional WebSocket layer** for **different devices**. When
+present, each change is also relayed through `server/server.js` to everyone in the
+same room code, and late-joining screens are caught up to the current state on
+connect. Turn it on from the **🔗 Cross-device Sync** dialog in Host Control.

@@ -236,6 +236,17 @@
 .fast-timer.warn .t-num { color: var(--c-strike); }
 .fast-timer svg { transform: rotate(-90deg); width:100%; height:100%; }
 
+/* Cross-device sync chip (bottom-left, subtle) */
+.board-sync { position: fixed; left: 14px; bottom: 12px; z-index: 50;
+  display: none; align-items: center; gap: 8px; font-family: var(--font-ui); font-weight: 600;
+  font-size: 13px; color: #cdd8ff; background: rgba(2,6,24,.6); border: 1px solid rgba(255,255,255,.14);
+  border-radius: 999px; padding: 7px 14px; backdrop-filter: blur(3px); }
+.board-sync.show { display: flex; }
+.board-sync .d { width: 9px; height: 9px; border-radius: 50%; background: #6b7280; }
+.board-sync .d.live { background: #3ce88a; box-shadow: 0 0 8px #3ce88a; }
+.board-sync .d.connecting, .board-sync .d.retry { background: var(--c-accent); animation: pulseDot 1s infinite; }
+@keyframes pulseDot { 0%,100%{opacity:1} 50%{opacity:.3} }
+
 @media (max-width: 900px) {
   .board-head { grid-template-columns: 1fr; gap: 10px; }
   .score-pod, .score-pod.right { justify-content: center; }

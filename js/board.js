@@ -270,6 +270,17 @@
       { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
+  // Cross-device sync indicator (only visible when a server connection is in play)
+  if (window.Sync) {
+    const chip = document.getElementById('boardSync');
+    Sync.onStatus((status, st) => {
+      if (status === 'off') { chip.classList.remove('show'); return; }
+      chip.classList.add('show');
+      const label = { connecting: 'Connecting…', live: 'Live · Room ' + (st ? st.room : ''), retry: 'Reconnecting…' }[status] || status;
+      chip.innerHTML = `<span class="d ${status}"></span>${label}`;
+    });
+  }
+
   Store.subscribe(render);
   document.addEventListener('DOMContentLoaded', render);
   render();

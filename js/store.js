@@ -14,13 +14,13 @@
 (function (global) {
   'use strict';
 
-  const LS_KEY = 'ff_state_v3';
+  const LS_KEY = 'ff_state_v4';
   const CHANNEL = 'family-feud-live';
 
   // ---- Default content ------------------------------------------------------
   const DEFAULT_THEME = {
     title: 'FAMILY FEUD',
-    subtitle: 'SURVEY SHOWDOWN',
+    subtitle: 'TEAMBUILDING ROI EDITION',
     logo: '',                 // dataURL, optional
     primary: '#1746c9',       // board blue
     accent: '#ffc21c',        // gold
@@ -30,8 +30,8 @@
   };
 
   const DEFAULT_STATE = {
-    v: 3,
-    clientName: 'Default Client',
+    v: 4,
+    clientName: 'TeamBuilding ROI',
     theme: clone(DEFAULT_THEME),
 
     teams: [
@@ -137,7 +137,7 @@
   try { channel = new BroadcastChannel(CHANNEL); } catch (e) { channel = null; }
 
   const listeners = new Set();
-  let selfWriting = false;
+  let syncSend = null;   // set by the optional WebSocket layer (js/sync.js)
 
   function persist() {
     try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
@@ -153,6 +153,9 @@
     persist();
     if (channel) {
       try { channel.postMessage({ type: 'state', state: state }); } catch (e) {}
+    }
+    if (syncSend) {
+      try { syncSend(state); } catch (e) {}
     }
   }
 
@@ -216,6 +219,17 @@
     emptyFast,
     DEFAULT_THEME,
     LS_KEY,
+
+    // ---- Hooks for the optional WebSocket sync layer (js/sync.js) ----
+    // Register a sender that pushes state to the network on every change.
+    setSyncSender(fn) { syncSend = fn; },
+    // Apply state received from the network (does NOT re-broadcast → no loops).
+    applyRemote(remoteState) {
+      if (!remoteState) return;
+      state = remoteState;
+      persist();
+      emit();
+    },
   };
 
   function deepMerge(target, src) {

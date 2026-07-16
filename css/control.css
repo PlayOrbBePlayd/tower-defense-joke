@@ -75,5 +75,20 @@
 .fm-timer-row { display:flex; gap:8px; align-items:center; margin: 12px 0; flex-wrap:wrap; }
 .fm-total-big { font-family: var(--font-display); font-size: 40px; color: var(--c-accent); text-align:center; }
 
-.connection { display:flex; align-items:center; gap:8px; font-size:12px; color:#8b9bd0; }
-.dot-live { width:9px;height:9px;border-radius:50%; background:#3ce88a; box-shadow:0 0 8px #3ce88a; }
+.connection { display:flex; align-items:center; gap:8px; font-size:12px; color:#cdd8ff; cursor:pointer;
+  background: rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:7px 14px; font-family:var(--font-ui); font-weight:600; }
+.connection:hover { border-color: var(--c-accent); }
+.dot-live { width:9px;height:9px;border-radius:50%; background:#3ce88a; box-shadow:0 0 8px #3ce88a; flex:0 0 auto; }
+.dot-live.off { background:#6b7280; box-shadow:none; }
+.dot-live.connecting, .dot-live.retry { background:var(--c-accent); box-shadow:0 0 8px var(--c-accent); animation:pulseDot 1s infinite; }
+.dot-live.live { background:#3ce88a; box-shadow:0 0 8px #3ce88a; }
+@keyframes pulseDot { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* Modal */
+.modal-back { position:fixed; inset:0; background:rgba(2,6,24,.7); backdrop-filter:blur(3px); z-index:200;
+  display:none; align-items:center; justify-content:center; padding:20px; }
+.modal-back.show { display:flex; }
+.modal { width:min(520px,94vw); background:linear-gradient(180deg,#121c44,#0b1330);
+  border:1px solid rgba(255,255,255,.14); border-radius:18px; padding:24px; box-shadow:0 30px 80px rgba(0,0,0,.6); }
+.modal h2 { font-family:var(--font-cond); font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--c-accent); font-size:22px; margin-bottom:10px; }
+.modal .hint { color:#9fb0e6; font-size:13px; line-height:1.5; }

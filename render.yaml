@@ -1,0 +1,14 @@
+# One-click deploy of the full game server (static app + WebSocket sync) to
+# Render's free tier. In Render: New → Blueprint → connect this repo → Apply.
+# You'll get a public https URL that works for cross-device play out of the box
+# (open it on the TV and on your phone/laptop, same room code).
+services:
+  - type: web
+    name: teambuilding-roi-family-feud
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
