@@ -50,6 +50,10 @@
       totalRounds: 10,
       round: 1,
       showFinal: false,        // show the FINAL STANDINGS screen
+      // Which two teams face off each round: matchups[roundIdx] = [teamA, teamB]
+      matchups: [],
+      // Buzzer face-off for the current round
+      faceoff: { buzzed: null, control: null },   // team indices
     },
 
     // ---- Main game round ----

@@ -62,6 +62,8 @@
     else if (s.boardMode === 'main') renderMain(s);
     else if (s.boardMode === 'fast') renderFast(s);
     else if (s.boardMode === 'leaderboard') renderLeaderboard(s);
+    else if (s.boardMode === 'matchup') renderMatchup(s);
+    else if (s.boardMode === 'question') renderQuestion(s);
     else renderLogo(s);
 
     // Strikes big overlay (3 strikes) + single flash on each wrong answer
@@ -199,6 +201,70 @@
     });
   }
 
+  /* ---------------- FACE-OFF: MATCHUP + QUESTION screens ---------------- */
+  // The two teams facing off this round: event.matchups[round-1], with safe
+  // fallbacks to the first two teams.
+  function currentMatchup(s) {
+    const m = (s.event.matchups || [])[(s.event.round || 1) - 1] || [];
+    const a = Number.isInteger(m[0]) && s.teams[m[0]] ? m[0] : 0;
+    let b = Number.isInteger(m[1]) && s.teams[m[1]] ? m[1] : (s.teams[1] ? 1 : 0);
+    if (b === a && s.teams.length > 1) b = a === 0 ? 1 : 0;
+    return [a, b];
+  }
+
+  function renderMatchup(s) {
+    const [a, b] = currentMatchup(s);
+    const key = s.event.round + '|' + s.teams[a].name + '|' + s.teams[b].name;
+    if (prev.boardMode !== 'matchup' || prev.matchupKey !== key) {
+      stage.innerHTML = `
+        <div class="matchup-screen">
+          <div class="mu-round">ROUND ${s.event.on ? s.event.round : ''}</div>
+          <div class="mu-teams">
+            <div class="mu-team a">${escapeHtml(s.teams[a].name)}</div>
+            <div class="mu-vs">VS</div>
+            <div class="mu-team b">${escapeHtml(s.teams[b].name)}</div>
+          </div>
+          <div class="mu-hint">HANDS ON BUZZERS!</div>
+        </div>`;
+      prev.boardMode = 'matchup';
+      prev.matchupKey = key;
+      Sound.ding();
+    }
+    Theme.apply();
+  }
+
+  function renderQuestion(s) {
+    const q = s.questions.main[s.main.questionIndex];
+    const [a, b] = currentMatchup(s);
+    const fo = s.event.faceoff || {};
+    const key = s.main.questionIndex + '|' + fo.buzzed + '|' + fo.control + '|' + s.event.round;
+    if (prev.boardMode !== 'question' || prev.questionKey !== key) {
+      let status;
+      if (fo.control != null && s.teams[fo.control]) {
+        status = `<div class="qs-status control">★ ${escapeHtml(s.teams[fo.control].name)} HAS CONTROL!</div>`;
+      } else if (fo.buzzed != null && s.teams[fo.buzzed]) {
+        status = `<div class="qs-status buzzed">🔔 ${escapeHtml(s.teams[fo.buzzed].name)} BUZZED IN!</div>`;
+      } else {
+        status = `<div class="qs-status waiting">HANDS ON BUZZERS…</div>`;
+      }
+      stage.innerHTML = `
+        <div class="question-screen">
+          <div class="qs-round">${s.event.on ? 'ROUND ' + s.event.round + ' · ' : ''}FACE-OFF</div>
+          <div class="qs-text">${escapeHtml(q ? q.q : '')}</div>
+          ${status}
+        </div>`;
+      // Sound cues on transitions
+      if (prev.boardMode === 'question') {
+        if (fo.buzzed != null && prev.foBuzzed == null) Sound.buzzIn();
+        if (fo.control != null && prev.foControl == null) Sound.ding();
+      }
+      prev.foBuzzed = fo.buzzed; prev.foControl = fo.control;
+      prev.boardMode = 'question';
+      prev.questionKey = key;
+    }
+    Theme.apply();
+  }
+
   /* ---------------- LEADERBOARD (event mode) ---------------- */
   function rankedTeams(s) {
     return s.teams.map((t, i) => ({ name: t.name, score: t.score, i }))
@@ -258,6 +324,14 @@
       banner.classList.toggle('dim', !s.main.showQuestion);
     }
 
+    // Face-off control chip (who owns the board this round)
+    const chip = stage.querySelector('.control-chip');
+    if (chip) {
+      const c = s.event.faceoff ? s.event.faceoff.control : null;
+      if (c != null && s.teams[c]) { chip.textContent = '★ ' + s.teams[c].name + ' HAS CONTROL'; chip.classList.remove('hidden'); }
+      else chip.classList.add('hidden');
+    }
+
     // Bank chip
     const bank = stage.querySelector('.bank-chip .amt');
     if (bank) bank.textContent = s.main.bank;
@@ -297,6 +371,7 @@
         </div>
       </div>`).join('');
     return `
+      <div class="control-chip hidden"></div>
       <div class="q-banner">${escapeHtml(q.q)}</div>
       <div class="board-frame">
         <div class="bank-chip"><small>ROUND BANK</small><span class="amt">${s.main.bank}</span></div>
