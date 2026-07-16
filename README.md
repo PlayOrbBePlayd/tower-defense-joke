@@ -88,8 +88,10 @@ For same-device use and as a shareable frontend, publish to GitHub Pages:
   **Award → Team** and the bank is added to their score (with confetti 🎉).
 
 ### 2. Fast Money (final / long round)
-- Two players, five questions each. Type each answer + point value (with
-  autocomplete from your saved answers), then reveal them one at a time.
+- Two players, up to **8 questions each** (one slot per speed-round category).
+  Step through questions with Prev/Next (shown big on the board), type each
+  answer + point value (with autocomplete), then reveal them one at a time.
+- **↺ Reset Fast Money** clears both players, totals and timer for a fresh run.
 - Built-in **timer ring**, **running total**, duplicate flagging, and a
   **Celebrate Win** button.
 
@@ -108,6 +110,11 @@ name.
 - The board counts down, plays the reveal, and then **stays up** — lights
   flashing, title pulsing — until you press the same button (now **⏹ CLOSE
   INTRO**) or switch screens.
+
+**Party FX buttons** (sidebar): 🎊 confetti + fanfare, 💨 a smoke machine that
+pours in from all four corners (heavy outside, thinning to the center, 3s),
+⚡ neon lasers that ricochet off the screen edges (3s), and 🛸 a UFO that
+cruises across the top, pulls a mid-air flip, and flies on.
 
 Close the event with **🎈 Play Outro** — "THANKS FOR PLAYING!" slams in over a
 sky of balloons drifting down with confetti, plus the client's name in a gold

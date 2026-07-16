@@ -88,6 +88,12 @@
       Sound.fanfare();
     } else if (fx.type === 'strikeSound') {
       Sound.strike();
+    } else if (fx.type === 'smoke') {
+      FX.smoke(); Sound.smoke();
+    } else if (fx.type === 'lasers') {
+      FX.lasers(); Sound.lasers();
+    } else if (fx.type === 'ufo') {
+      FX.ufo(); Sound.ufo();
     }
   }
 
@@ -483,7 +489,7 @@
   function fastHtml(s) {
     const f = s.fast;
     const fq = s.questions.fast[f.questionIndex || 0];
-    const rows = Array.from({ length: 5 }, (_, i) => `
+    const rows = Array.from({ length: 8 }, (_, i) => `
       <div class="fast-row" data-i="${i}">
         <span class="fa-num">${i + 1}</span>
         <span class="fa-ans"></span>

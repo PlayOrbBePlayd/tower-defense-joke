@@ -46,6 +46,21 @@
     src.start(t0); src.stop(t0 + dur);
   }
 
+  // Frequency-sweep zap (lasers, UFO warble tail)
+  function zap(start, f0, f1, dur, gain) {
+    const c = ac(); if (!c) return;
+    const t0 = c.currentTime + start;
+    const o = c.createOscillator(); const g = c.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(f0, t0);
+    o.frequency.exponentialRampToValueAtTime(Math.max(40, f1), t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain || 0.2, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(t0); o.stop(t0 + dur + 0.02);
+  }
+
   const Sound = {
     setEnabled(v) { enabled = v; },
     isEnabled() { return enabled; },
@@ -111,6 +126,27 @@
     click() {
       if (!enabled) return;
       tone(660, 0, 0.04, 'square', 0.08);
+    },
+
+    // 💨 Smoke machine — long airy whoosh
+    smoke() {
+      if (!enabled) return;
+      noise(0, 1.5, 0.22, 500);
+      noise(0.15, 1.3, 0.13, 260);
+      noise(0.3, 1.0, 0.08, 900);
+    },
+
+    // ⚡ Laser show — cascade of descending pew-pews
+    lasers() {
+      if (!enabled) return;
+      for (let i = 0; i < 6; i++) zap(i * 0.14, 1500 - i * 90, 220, 0.2, 0.18);
+    },
+
+    // 🛸 UFO — theremin-ish warble with a dive at the end
+    ufo() {
+      if (!enabled) return;
+      [620, 960, 720, 1080, 830, 1240].forEach((f, i) => tone(f, i * 0.16, 0.22, 'sine', 0.15));
+      zap(1.1, 1400, 280, 0.5, 0.14);
     },
   };
 

@@ -59,6 +59,8 @@
 /* Right sidebar */
 .side-actions { display:flex; flex-direction: column; gap: 10px; }
 .side-actions .btn { justify-content: flex-start; }
+.fx-row { display:flex; gap:8px; }
+.fx-row .btn { flex:1; justify-content:center; }
 .hint { font-size:12px; color:#8b9bd0; line-height:1.4; margin-top:6px; }
 .kbd { background: rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); border-bottom-width:2px; border-radius:5px; padding:1px 6px; font-family:monospace; font-size:12px; }
 
