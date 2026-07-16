@@ -71,6 +71,7 @@
     // ---- Fast money / final round ----
     fast: {
       active: false,
+      questionIndex: 0,        // which speed-round question is being asked
       playerView: 1,           // which player's answers are shown on board (1|2)
       // per-player: array of {answer, points, revealed} — 5 slots each
       p1: emptyFast(),

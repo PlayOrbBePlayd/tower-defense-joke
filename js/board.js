@@ -31,22 +31,31 @@
     const s = Store.get();
     Sound.setEnabled(s.sound !== false);
 
-    // Header — event mode repurposes the two pods for LEADER + ROUND readout.
+    // Header — event mode repurposes the two pods for LEADER + ROUND readout;
+    // during Fast Money the right pod becomes FAST MONEY · P1/P2 (rounds are done).
     const pod0 = document.getElementById('pod0'), pod1 = document.getElementById('pod1');
     if (s.event.on) {
       const ranked = rankedTeams(s);
       const leader = ranked[0];
       document.getElementById('t0name').textContent = '🏆 ' + (leader ? leader.name : '—');
       document.getElementById('t0score').textContent = leader ? leader.score : 0;
-      document.getElementById('t1name').textContent = 'ROUND';
-      document.getElementById('t1score').textContent = s.event.round + '/' + s.event.totalRounds;
       pod0.classList.remove('active'); pod1.classList.remove('active');
     } else {
       document.getElementById('t0name').textContent = s.teams[0].name;
-      document.getElementById('t1name').textContent = s.teams[1].name;
       document.getElementById('t0score').textContent = s.teams[0].score;
-      document.getElementById('t1score').textContent = s.teams[1].score;
       pod0.classList.toggle('active', s.main.activeTeam === 0 && s.boardMode === 'main');
+    }
+    if (s.boardMode === 'fast') {
+      document.getElementById('t1name').textContent = 'FAST MONEY';
+      document.getElementById('t1score').textContent = 'P' + (s.fast.playerView === 2 ? 2 : 1);
+      pod1.classList.remove('active');
+    } else if (s.event.on) {
+      document.getElementById('t1name').textContent = 'ROUND';
+      document.getElementById('t1score').textContent = s.event.round + '/' + s.event.totalRounds;
+      pod1.classList.remove('active');
+    } else {
+      document.getElementById('t1name').textContent = s.teams[1].name;
+      document.getElementById('t1score').textContent = s.teams[1].score;
       pod1.classList.toggle('active', s.main.activeTeam === 1 && s.boardMode === 'main');
     }
 
@@ -411,12 +420,18 @@
     const key = JSON.stringify(pl.map((x) => [x.answer, x.points, x.revealed]))
       + '|' + f.playerView + '|' + f.showTotals + '|' + fastTotal(s) + '|' + f.timerLabel;
 
-    if (prev.boardMode !== 'fast' || prev.fastStruct !== f.playerView + '|' + f.timerLabel) {
+    const struct = f.playerView + '|' + f.timerLabel + '|' + (f.questionIndex || 0);
+    if (prev.boardMode !== 'fast' || prev.fastStruct !== struct) {
       stage.innerHTML = fastHtml(s);
       prev.boardMode = 'fast';
-      prev.fastStruct = f.playerView + '|' + f.timerLabel;
+      prev.fastStruct = struct;
       prev.fastKey = '';
     }
+
+    // Current speed-round question (updates live as the host steps through them)
+    const fq = s.questions.fast[f.questionIndex || 0];
+    const qEl = stage.querySelector('.fast-q');
+    if (qEl) qEl.textContent = fq ? fq.q : '';
 
     // total
     const totEl = stage.querySelector('.fast-total .amt');
@@ -458,6 +473,7 @@
 
   function fastHtml(s) {
     const f = s.fast;
+    const fq = s.questions.fast[f.questionIndex || 0];
     const rows = Array.from({ length: 5 }, (_, i) => `
       <div class="fast-row" data-i="${i}">
         <span class="fa-num">${i + 1}</span>
@@ -468,7 +484,7 @@
     return `
       <div class="fast-root">
         ${label}
-        <div class="fast-title">FAST MONEY — ${escapeHtml(f.timerLabel || 'FINAL ROUND')}</div>
+        <div class="q-banner fast-q">${escapeHtml(fq ? fq.q : '')}</div>
         <div class="fast-total ${f.showTotals ? '' : 'hidden'}"><small>TOTAL</small><span class="amt">${fastTotal(s)}</span></div>
         <div class="fast-grid">${rows}</div>
       </div>`;

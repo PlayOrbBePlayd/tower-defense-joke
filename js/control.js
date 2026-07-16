@@ -233,13 +233,33 @@
 
   function fmData() { return fmPlayer === 2 ? S().fast.p2 : S().fast.p1; }
 
+  // Speed-round question navigation — the board shows the selected question.
+  function setFastQ(i) {
+    Store.patch((s) => {
+      s.fast.questionIndex = Math.max(0, Math.min(s.questions.fast.length - 1, i));
+    });
+    renderFast();
+  }
+  $('fmPrevQ').onclick = () => setFastQ((S().fast.questionIndex || 0) - 1);
+  $('fmNextQ').onclick = () => setFastQ((S().fast.questionIndex || 0) + 1);
+  $('fmQSelect').onchange = () => setFastQ(+$('fmQSelect').value);
+
   function renderFast() {
     const s = S();
     const data = fmData();
     const rows = $('fmRows');
-    // suggestions pooled from all fast questions' answers
+
+    // question picker + preview
+    const qi = s.fast.questionIndex || 0;
+    $('fmQSelect').innerHTML = s.questions.fast.map((q, i) =>
+      `<option value="${i}" ${i === qi ? 'selected' : ''}>${i + 1}. ${escHtml(q.q).slice(0, 60)}</option>`).join('');
+    const curQ = s.questions.fast[qi];
+    $('fmQPreview').textContent = curQ ? curQ.q : '(no speed-round questions — add some in the Editor)';
+
+    // suggestions: the current question's answers first, then the rest
     const pool = [];
-    s.questions.fast.forEach((q) => q.answers.forEach((a) => pool.push(a)));
+    if (curQ) curQ.answers.forEach((a) => pool.push(a));
+    s.questions.fast.forEach((q, i) => { if (i !== qi) q.answers.forEach((a) => pool.push(a)); });
     rows.innerHTML = data.map((item, i) => `
       <div class="fm-row" data-i="${i}">
         <div class="idx">${i + 1}</div>
