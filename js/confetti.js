@@ -5,8 +5,13 @@
     opts = opts || {};
     const ctx = canvas.getContext('2d');
     const DPR = Math.min(global.devicePixelRatio || 1, 2);
-    canvas.width = innerWidth * DPR; canvas.height = innerHeight * DPR;
-    ctx.scale(DPR, DPR);
+    // Only reallocate the canvas when the viewport actually changed —
+    // resizing mid-show causes a visible frame hitch.
+    const W = Math.round(innerWidth * DPR), H = Math.round(innerHeight * DPR);
+    if (canvas.width !== W || canvas.height !== H) {
+      canvas.width = W; canvas.height = H;
+    }
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     const colors = opts.colors || ['#ffc21c', '#4f7bff', '#ffffff', '#ff6b6b', '#3ce88a'];
     const N = opts.count || 180;
     const parts = [];

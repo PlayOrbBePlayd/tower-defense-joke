@@ -241,8 +241,20 @@
   gap: clamp(10px, 2.4vh, 30px); text-align: center;
   background: radial-gradient(1300px 900px at 50% 32%, var(--c-deep-lt), #01030f 78%); }
 
-/* Spinning spotlight rays — two layers, opposite directions */
-.intro-rays { position: absolute; inset: -60%;
+/* Promote every animated intro piece to its own GPU layer so the word slams
+ * stay smooth: transforms/opacity run on the compositor and the expensive
+ * text/box shadows get rasterized once instead of repainted every frame. */
+.intro-ready, .intro-brand, .intro-title, .intro-client, .intro-count span,
+.intro-flash, .intro-rays, .intro-sparkles .sp, .intro-bulbs .b {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Spinning spotlight rays — two layers, opposite directions.
+ * inset -35% is the smallest square that still covers the screen at every
+ * rotation angle; keeping the layer small keeps compositing cheap. */
+.intro-rays { position: absolute; inset: -35%;
   background:
     conic-gradient(from 0deg,
       transparent 0 14deg, rgba(255,194,28,.14) 14deg 22deg,
@@ -276,7 +288,7 @@
 .intro-count { position: absolute; inset: 0; display: grid; place-items: center; z-index: 3; pointer-events: none; }
 .intro-count span { grid-area: 1/1; font-family: var(--font-display);
   font-size: clamp(140px, 42vh, 460px); line-height: 1; color: var(--c-accent);
-  text-shadow: 0 8px 0 var(--c-accent-dk), 0 0 90px var(--c-primary-glow), 0 20px 60px rgba(0,0,0,.7);
+  text-shadow: 0 8px 0 var(--c-accent-dk), 0 0 44px var(--c-primary-glow), 0 12px 30px rgba(0,0,0,.6);
   opacity: 0; }
 .intro-count span:nth-child(1) { animation: countPop 1s ease 0s forwards; }
 .intro-count span:nth-child(2) { animation: countPop 1s ease 1s forwards; }
@@ -307,13 +319,13 @@
   animation: popIn .5s cubic-bezier(.2,1.6,.4,1) 3.25s forwards; }
 .intro-brand { font-family: var(--font-display); font-size: clamp(30px, 6.4vw, 100px); color: #fff;
   letter-spacing: .04em; line-height: 1; opacity: 0; position: relative; z-index: 2;
-  text-shadow: 0 4px 0 var(--c-primary-dk), 0 10px 34px rgba(0,0,0,.6);
+  text-shadow: 0 4px 0 var(--c-primary-dk), 0 8px 20px rgba(0,0,0,.55);
   animation: slamBounce .85s cubic-bezier(.2,1.1,.35,1) 3.95s forwards; }
 .intro-title { font-family: var(--font-display); font-size: clamp(64px, 14vw, 230px); line-height: .9;
   color: #fff; position: relative; z-index: 2;
-  text-shadow: 0 6px 0 var(--c-primary-dk), 0 18px 48px rgba(0,0,0,.7);
+  text-shadow: 0 6px 0 var(--c-primary-dk), 0 10px 26px rgba(0,0,0,.6);
   opacity: 0; animation: slamBounceBig 1s cubic-bezier(.2,1.1,.35,1) 4.85s forwards, titleThrob 1.1s ease-in-out 6s infinite; }
-.intro-title .accent { color: var(--c-accent); text-shadow: 0 6px 0 var(--c-accent-dk), 0 0 70px var(--c-primary-glow); }
+.intro-title .accent { color: var(--c-accent); text-shadow: 0 6px 0 var(--c-accent-dk), 0 0 34px var(--c-primary-glow); }
 @keyframes slamIn { 0%{opacity:0; transform:scale(3.4) rotate(-6deg);} 60%{opacity:1; transform:scale(.92) rotate(1.5deg);} 100%{opacity:1; transform:scale(1) rotate(0);} }
 /* Bounce WAY out past full size, then spring back to rest */
 @keyframes slamBounce {
@@ -335,12 +347,20 @@
 @keyframes popIn { 0%{opacity:0; transform:translateY(26px) scale(.7);} 100%{opacity:1; transform:none;} }
 @keyframes titleThrob { 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
 .intro-client { opacity: 0; position: relative; z-index: 2;
-  animation: popIn .55s cubic-bezier(.2,1.5,.4,1) 6.6s forwards, clientGlow 1.4s ease-in-out 7.2s infinite;
+  animation: popIn .55s cubic-bezier(.2,1.5,.4,1) 6.6s forwards;
   background: linear-gradient(180deg, #ffe08a, var(--c-accent)); color: #3a2500;
   font-family: var(--font-cond); font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
   font-size: clamp(20px, 3.4vw, 52px); padding: clamp(8px,1.6vh,18px) clamp(26px,4.5vw,70px);
   border-radius: 999px; border: 3px solid #fff; box-shadow: 0 14px 44px rgba(0,0,0,.55); }
 .intro-client small { display: block; text-align: center; font-size: .42em; letter-spacing: .34em; opacity: .78; }
+/* glow pulse lives on a layered pseudo-element and animates only opacity —
+ * compositor-cheap, unlike animating box-shadow itself */
+.intro-client::after { content: ''; position: absolute; inset: -4px; border-radius: 999px;
+  pointer-events: none; box-shadow: 0 0 46px var(--c-primary-glow);
+  opacity: 0; animation: glowPulse 1.4s ease-in-out 7.2s infinite;
+  will-change: opacity; }
+@keyframes glowPulse { 0%,100%{opacity:0;} 50%{opacity:1;} }
+/* kept for the outro banner, which still references it */
 @keyframes clientGlow { 0%,100%{ box-shadow: 0 14px 44px rgba(0,0,0,.55);} 50%{ box-shadow: 0 14px 44px rgba(0,0,0,.55), 0 0 46px var(--c-primary-glow);} }
 
 /* ---- OUTRO (show close, balloons falling) ---- */
