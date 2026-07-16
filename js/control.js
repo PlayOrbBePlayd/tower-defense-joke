@@ -39,11 +39,19 @@
   $('ctlClientName').oninput = () => Store.patch((s) => { s.clientName = $('ctlClientName').value; });
   $('playIntro').onclick = () => {
     Store.patch((s) => { s.boardMode = 'intro'; s.introId = (s.introId || 0) + 1; });
-    toast('🎬 Intro rolling on the board!');
+    toast('🎬 3-2-1… intro rolling on the board!');
     clearTimeout(introTO);
+    // 3s countdown + 8s reveal + a little slack, then back to the title screen.
     introTO = setTimeout(() => {
       if (S().boardMode === 'intro') { Store.patch((s) => { s.boardMode = 'logo'; }); syncTabs(); }
-    }, 8400);
+    }, 11400);
+  };
+
+  // Show-close outro: balloons fall until the host switches screens.
+  $('playOutro').onclick = () => {
+    clearTimeout(introTO);
+    Store.patch((s) => { s.boardMode = 'outro'; s.outroId = (s.outroId || 0) + 1; });
+    toast('🎈 Outro playing — balloons away!');
   };
 
   $('toLogo').onclick = () => { Store.patch((s) => { s.boardMode = 'logo'; }); syncTabs(); };
