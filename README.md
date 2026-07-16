@@ -95,6 +95,30 @@ For same-device use and as a shareable frontend, publish to GitHub Pages:
 
 ---
 
+## Running a big event — many teams, many rounds 🏆
+
+For a large game (e.g. **12 teams across 10 rounds**), use **Event / Tournament mode**
+in Host Control (the **Event** tab):
+
+1. **Set up once:** flip **Event mode ON**, set the number of **Teams** (e.g. 12) and
+   **Total rounds** (e.g. 10), then type each team's name in the roster. Names and
+   scores appear on the board **leaderboard** live.
+2. **Between rounds** the board shows the **Leaderboard** (all teams ranked, top-3 in
+   gold/silver/bronze). Use **Show Leaderboard** anytime.
+3. **Play a round:** go to **Main Game**, pick/reveal the question as usual, then in the
+   award bar **tap the team that won** to bank that round's points to them. (Tap is
+   locked after awarding so you can't double-count.)
+4. **Next Round ▶** advances the round counter, loads the next question, clears the
+   board, and pops the leaderboard back up — cumulative scores are kept.
+5. **After the last round**, hit **Show Final Standings** for the champion reveal with
+   confetti. 🎉
+
+Scoring is flexible: tap a team to add the round's board points, or adjust any score
+directly in the roster (± buttons or type a value) to match your house rules — one
+winner per round, multiple teams scoring, or head-to-head within a round all work.
+
+To go back to a classic 2-team head-to-head game, just turn **Event mode OFF**.
+
 ## Customization
 
 ### Questions — `Editor` (`editor.html`)
