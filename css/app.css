@@ -1,0 +1,142 @@
+/* ==========================================================================
+   Family Feud — Survey Showdown   |   shared stylesheet
+   ========================================================================== */
+@import url('../assets/fonts/fonts.css');  /* self-hosted — no network dependency */
+
+:root {
+  --c-primary: #1746c9;
+  --c-primary-lt: #4f7bff;
+  --c-primary-dk: #0a2b8a;
+  --c-accent: #ffc21c;
+  --c-accent-dk: #b37c00;
+  --c-deep: #050b2e;
+  --c-deep-lt: #12205a;
+  --c-text: #ffffff;
+  --c-strike: #e23b3b;
+  --c-primary-glow: rgba(255, 194, 28, 0.55);
+  --c-primary-a30: rgba(23, 70, 201, 0.3);
+
+  --font-display: 'Anton', 'Impact', 'Haettenschweiler', 'Arial Narrow', sans-serif;
+  --font-cond: 'Barlow Condensed', 'Oswald', 'Arial Narrow', 'Impact', sans-serif;
+  --font-ui: 'Rubik', system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font-ui);
+  color: var(--c-text);
+  background:
+    radial-gradient(1200px 700px at 50% -10%, var(--c-deep-lt), transparent 60%),
+    radial-gradient(900px 900px at 100% 100%, rgba(255,194,28,0.06), transparent 55%),
+    linear-gradient(160deg, var(--c-deep), #01030f 90%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Stage-light sweep used on board + launcher */
+.stage-lights::before {
+  content: '';
+  position: fixed; inset: -20% -20% auto -20%; height: 60vh; z-index: 0;
+  background:
+    conic-gradient(from 200deg at 20% 0, transparent 0 25%, rgba(255,194,28,.05) 30%, transparent 40%),
+    conic-gradient(from 160deg at 80% 0, transparent 0 25%, rgba(79,123,255,.06) 30%, transparent 40%);
+  pointer-events: none;
+}
+
+.hidden { display: none !important; }
+
+/* ------- Buttons ---------------------------------------------------------- */
+.btn {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: .3px;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  cursor: pointer;
+  color: #06122e;
+  background: linear-gradient(180deg, #fff, #d8e0f5);
+  box-shadow: 0 6px 0 rgba(0,0,0,.35), 0 10px 22px rgba(0,0,0,.35);
+  transition: transform .07s ease, box-shadow .07s ease, filter .15s ease;
+  user-select: none;
+  display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+}
+.btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,.35), 0 6px 14px rgba(0,0,0,.35); }
+.btn:disabled { opacity: .4; cursor: not-allowed; filter: grayscale(.4); }
+.btn.gold { background: linear-gradient(180deg, #ffe08a, var(--c-accent)); box-shadow: 0 6px 0 var(--c-accent-dk), 0 10px 22px rgba(0,0,0,.4); color:#3a2500; }
+.btn.blue { background: linear-gradient(180deg, var(--c-primary-lt), var(--c-primary)); color:#fff; box-shadow: 0 6px 0 var(--c-primary-dk), 0 10px 22px rgba(0,0,0,.4); }
+.btn.red  { background: linear-gradient(180deg, #ff7a7a, var(--c-strike)); color:#fff; box-shadow: 0 6px 0 #8f1f1f, 0 10px 22px rgba(0,0,0,.4); }
+.btn.green{ background: linear-gradient(180deg, #7ee6a5, #17a34a); color:#062611; box-shadow: 0 6px 0 #0c6b2f, 0 10px 22px rgba(0,0,0,.4); }
+.btn.ghost{ background: rgba(255,255,255,.06); color: #dfe6ff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+.btn.ghost:active { transform: translateY(2px); }
+.btn.sm { padding: 8px 12px; font-size: 13px; border-radius: 9px; }
+.btn.lg { padding: 16px 26px; font-size: 18px; }
+.btn.block { width: 100%; }
+
+/* ------- Inputs ----------------------------------------------------------- */
+input[type=text], input[type=number], textarea, select {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  color: #eaf0ff;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 10px;
+  padding: 10px 12px;
+  width: 100%;
+  outline: none;
+  transition: border-color .15s, background .15s;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--c-accent); background: rgba(255,255,255,.09); }
+label.fld { display:block; font-size:12px; text-transform:uppercase; letter-spacing:.12em; color:#9fb0e6; margin: 0 0 6px; font-weight:600; }
+.field { margin-bottom: 14px; }
+
+/* ------- Panels / cards --------------------------------------------------- */
+.panel {
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  position: relative;
+}
+.panel h2 { font-family: var(--font-cond); font-weight:700; letter-spacing:.04em; font-size: 20px; text-transform: uppercase; color: var(--c-accent); margin-bottom: 12px; }
+
+/* ------- Brand lockup ----------------------------------------------------- */
+.brand-logo {
+  width: 64px; height: 64px; border-radius: 14px;
+  background: rgba(255,255,255,.06) center/contain no-repeat;
+  border: 1px solid rgba(255,255,255,.12);
+  display: grid; place-items: center; flex: 0 0 auto;
+}
+.brand-logo.has-logo { background-color: rgba(255,255,255,.95); background-size: contain; padding: 4px; }
+.brand-logo:not(.has-logo)::after { content:'★'; color: var(--c-accent); font-size: 30px; }
+
+/* The oval FEUD-style title plate */
+.title-plate {
+  font-family: var(--font-display);
+  letter-spacing: .02em;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 3px 0 var(--c-primary-dk), 0 6px 18px rgba(0,0,0,.6);
+  line-height: .92;
+}
+
+/* ------- Toast ------------------------------------------------------------ */
+.toast {
+  position: fixed; left:50%; bottom: 28px; transform: translateX(-50%) translateY(30px);
+  background: linear-gradient(180deg, #ffe08a, var(--c-accent)); color:#3a2500;
+  font-weight: 800; padding: 12px 22px; border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.5); opacity: 0; pointer-events:none;
+  transition: transform .25s, opacity .25s; z-index: 9999; font-size: 15px;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 10px; }
+::-webkit-scrollbar-track { background: transparent; }

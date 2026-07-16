@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Board — Family Feud</title>
+  <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/board.css" />
+</head>
+<body class="stage-lights">
+  <div class="board-root" id="root">
+
+    <!-- Header -->
+    <div class="board-head">
+      <div class="score-pod" id="pod0">
+        <span class="team-name" id="t0name">TEAM 1</span>
+        <span class="team-score" id="t0score">0</span>
+      </div>
+      <div class="board-brand">
+        <div class="brand-logo" data-brand-logo></div>
+        <div class="plate-title" data-brand-title>FAMILY FEUD</div>
+      </div>
+      <div class="score-pod right" id="pod1">
+        <span class="team-score" id="t1score">0</span>
+        <span class="team-name" id="t1name">TEAM 2</span>
+      </div>
+    </div>
+
+    <!-- Stage swaps between logo / main / fast -->
+    <div class="stage" id="stage"></div>
+  </div>
+
+  <!-- Strikes overlay -->
+  <div class="strikes-layer" id="strikesLayer"></div>
+  <div id="flashHost"></div>
+  <canvas id="confetti" style="position:fixed;inset:0;pointer-events:none;z-index:60;"></canvas>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/confetti.js"></script>
+  <script src="js/board.js"></script>
+</body>
+</html>

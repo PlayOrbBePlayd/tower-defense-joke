@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control — Family Feud</title>
+  <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/control.css" />
+</head>
+<body>
+  <div class="ctrl-root">
+    <!-- Top bar -->
+    <div class="ctrl-top">
+      <div class="brand-logo" data-brand-logo></div>
+      <div class="titles">
+        <div class="t" data-brand-title>FAMILY FEUD</div>
+        <div class="s"><span data-client-name>Default Client</span> · HOST CONTROL</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="connection"><span class="dot-live"></span> Board synced</div>
+      <div class="mode-tabs" id="modeTabs">
+        <button data-mode="logo">Title</button>
+        <button data-mode="main" class="active">Main Game</button>
+        <button data-mode="fast">Fast Money</button>
+      </div>
+      <button class="btn blue sm" id="openBoard">⧉ Open Board</button>
+    </div>
+
+    <div class="ctrl-grid">
+      <!-- LEFT: mode-specific control -->
+      <div>
+        <div class="panel" id="mainPanel">
+          <!-- teams -->
+          <div class="teams-row" id="teamsRow"></div>
+
+          <div class="q-select-row">
+            <button class="btn ghost sm" id="prevQ">◀ Prev</button>
+            <select id="qSelect"></select>
+            <button class="btn ghost sm" id="nextQ">Next ▶</button>
+          </div>
+          <div class="q-preview" id="qPreview"></div>
+
+          <div class="ans-list" id="ansList"></div>
+
+          <div class="strike-controls">
+            <button class="btn red" id="strikeBtn">✕ STRIKE</button>
+            <div class="strike-dots" id="strikeDots"></div>
+            <button class="btn ghost sm" id="clearStrikes">Clear</button>
+            <button class="btn red sm" id="bigStrike">Show Triple ✕✕✕</button>
+            <div class="spacer" style="flex:1"></div>
+            <div class="bank-line">BANK <span class="amt" id="bankAmt">0</span></div>
+          </div>
+
+          <div class="reveal-actions">
+            <button class="btn ghost sm" id="revealAll">Reveal All</button>
+            <button class="btn ghost sm" id="hideAll">Hide All</button>
+            <button class="btn green" id="awardT0">Award → Team 1</button>
+            <button class="btn green" id="awardT1">Award → Team 2</button>
+            <button class="btn gold" id="newRound">↺ Reset Round</button>
+          </div>
+        </div>
+
+        <!-- FAST MONEY PANEL -->
+        <div class="panel hidden" id="fastPanel">
+          <h2>Fast Money — Final Round</h2>
+          <div class="fm-player-tabs">
+            <button class="btn blue" data-player="1" id="fmP1">Player 1 (on board)</button>
+            <button class="btn ghost" data-player="2" id="fmP2">Player 2</button>
+          </div>
+
+          <div class="q-select-row">
+            <label class="fld" style="margin:0">Load a saved question's answers into the picker:</label>
+          </div>
+
+          <div id="fmRows"></div>
+
+          <div class="fm-timer-row">
+            <label class="fld" style="margin:0">Timer</label>
+            <input type="number" id="fmTimerSet" value="20" style="width:80px" />
+            <button class="btn blue sm" id="fmStart">▶ Start</button>
+            <button class="btn ghost sm" id="fmStop">⏸ Stop</button>
+            <button class="btn ghost sm" id="fmReset">↺ Reset</button>
+            <input type="text" id="fmLabel" placeholder="Label (e.g. PLAYER 1)" style="flex:1;min-width:120px" />
+          </div>
+
+          <div class="reveal-actions">
+            <button class="btn ghost sm" id="fmRevealAll">Reveal All</button>
+            <button class="btn ghost sm" id="fmHideAll">Hide All</button>
+            <button class="btn gold sm" id="fmToggleTotal">Toggle Total</button>
+            <div class="fm-total-big" id="fmTotal" style="flex:1">0</div>
+            <button class="btn green" id="fmWin">🎉 Celebrate Win</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT sidebar -->
+      <div class="panel">
+        <h2>Show Controls</h2>
+        <div class="side-actions">
+          <button class="btn gold block" id="toLogo">🏆 Show Title Screen</button>
+          <button class="btn blue block" id="toMain">▶ Show Main Game</button>
+          <button class="btn blue block" id="toFast">💰 Show Fast Money</button>
+          <button class="btn green block" id="celebrate">🎊 Confetti + Fanfare</button>
+          <hr style="border-color:rgba(255,255,255,.1); margin:6px 0" />
+          <button class="btn ghost block" id="toggleSound">🔊 Sound: On</button>
+          <a class="btn ghost block" href="editor.html" target="_blank" style="text-decoration:none">✎ Edit Questions</a>
+          <a class="btn ghost block" href="settings.html" target="_blank" style="text-decoration:none">🎨 Branding & Theme</a>
+          <a class="btn ghost block" href="index.html" style="text-decoration:none">⌂ Home / Launcher</a>
+          <hr style="border-color:rgba(255,255,255,.1); margin:6px 0" />
+          <button class="btn red block" id="resetAll">⚠ Reset Everything</button>
+        </div>
+        <div class="hint">
+          <strong>Keyboard:</strong><br/>
+          <span class="kbd">1</span>–<span class="kbd">8</span> reveal answer ·
+          <span class="kbd">X</span> strike ·
+          <span class="kbd">Space</span> reveal next ·
+          <span class="kbd">C</span> confetti
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/control.js"></script>
+</body>
+</html>

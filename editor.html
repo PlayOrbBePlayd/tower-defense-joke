@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editor — Family Feud</title>
+  <link rel="stylesheet" href="css/app.css" />
+  <style>
+    .ed-root { max-width: 1100px; margin: 0 auto; padding: 20px; position: relative; z-index: 1; }
+    .ed-head { display:flex; align-items:center; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+    .ed-head .brand-logo { width:44px; height:44px; }
+    .ed-head h1 { font-family: var(--font-cond); font-weight:700; text-transform:uppercase; letter-spacing:.03em; font-size:26px; }
+    .ed-head .spacer { flex:1; }
+    .tabs { display:flex; gap:8px; background: rgba(0,0,0,.3); padding:5px; border-radius:12px; margin-bottom:16px; width:fit-content; }
+    .tabs button { border:none; background:transparent; color:#aab6e6; font-weight:700; padding:9px 20px; border-radius:9px; cursor:pointer; font-size:14px; }
+    .tabs button.active { background: linear-gradient(180deg, var(--c-accent), var(--c-accent-dk)); color:#3a2500; }
+    .q-card { margin-bottom: 14px; }
+    .q-card .q-top { display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+    .q-card .q-top .qnum { font-family: var(--font-display); color: var(--c-accent); font-size:22px; min-width:30px; }
+    .q-card .q-top input.qtext { font-family: var(--font-cond); font-weight:600; font-size:18px; }
+    .ans-edit { display:grid; grid-template-columns: 1fr 90px auto; gap:8px; margin-bottom:6px; align-items:center; }
+    .ans-edit .rank { display:none; }
+    .sum { font-size:13px; color:#9fb0e6; margin-top:6px; }
+    .sum.warn { color: var(--c-accent); }
+    .q-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .toolbar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+    input[type=file] { display:none; }
+  </style>
+</head>
+<body>
+  <div class="ed-root">
+    <div class="ed-head">
+      <div class="brand-logo" data-brand-logo></div>
+      <h1>Question Editor</h1>
+      <div class="spacer"></div>
+      <a class="btn ghost sm" href="control.html">Control</a>
+      <a class="btn ghost sm" href="index.html">Home</a>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button data-t="main" class="active">Main Game</button>
+      <button data-t="fast">Fast Money</button>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn green sm" id="addQ">＋ Add Question</button>
+      <button class="btn ghost sm" id="exportBtn">⭳ Export JSON</button>
+      <button class="btn ghost sm" id="importBtn">⭱ Import JSON</button>
+      <input type="file" id="importFile" accept="application/json,.json" />
+      <button class="btn ghost sm" id="restoreBtn">↺ Restore Samples</button>
+      <div class="sum" style="align-self:center">Changes save & sync automatically.</div>
+    </div>
+
+    <div id="list"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/editor.js"></script>
+</body>
+</html>

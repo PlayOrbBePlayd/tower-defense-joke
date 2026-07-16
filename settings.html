@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Branding — Family Feud</title>
+  <link rel="stylesheet" href="css/app.css" />
+  <style>
+    .set-root { max-width: 1120px; margin: 0 auto; padding: 20px; position: relative; z-index:1; }
+    .set-head { display:flex; align-items:center; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+    .set-head .brand-logo { width:44px; height:44px; }
+    .set-head h1 { font-family: var(--font-cond); font-weight:700; text-transform:uppercase; letter-spacing:.03em; font-size:26px; }
+    .set-head .spacer { flex:1; }
+    .set-grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:start; }
+    @media (max-width: 860px){ .set-grid { grid-template-columns:1fr; } }
+    .swatch-row { display:grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+    .swatch { display:flex; flex-direction:column; gap:6px; }
+    .swatch label { font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:#9fb0e6; font-weight:600; }
+    .swatch .pick { display:flex; gap:8px; align-items:center; }
+    .swatch input[type=color] { width:48px; height:40px; border:none; border-radius:8px; background:none; cursor:pointer; padding:0; }
+    .swatch input[type=text] { flex:1; font-family:monospace; }
+    .logo-drop {
+      border: 2px dashed rgba(255,255,255,.25); border-radius:14px; padding:22px; text-align:center; cursor:pointer;
+      transition: border-color .15s, background .15s; margin-bottom:12px;
+    }
+    .logo-drop:hover { border-color: var(--c-accent); background: rgba(255,255,255,.04); }
+    .logo-drop.has { border-style: solid; }
+    .logo-preview { width:120px; height:120px; margin:0 auto 10px; border-radius:14px; background:#fff center/contain no-repeat; display:none; }
+    .logo-preview.show { display:block; }
+    .preset-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+    .preset { width:46px; height:46px; border-radius:10px; cursor:pointer; border:2px solid rgba(255,255,255,.2); position:relative; overflow:hidden; }
+    .preset:hover { transform: scale(1.06); }
+    .profiles-list { display:flex; flex-direction:column; gap:8px; }
+    .profile-item { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:8px 10px; }
+    .profile-item .pl { flex:1; font-weight:600; }
+    .mini-preview {
+      border-radius:14px; padding:18px; text-align:center; margin-top:8px; overflow:hidden;
+      background: linear-gradient(160deg, var(--c-deep), #01030f);
+    }
+    .mini-preview .mp-board {
+      background: linear-gradient(180deg, var(--c-primary-lt), var(--c-primary-dk));
+      border:3px solid var(--c-accent); border-radius:14px; padding:14px; margin-top:10px;
+    }
+    .mini-preview .mp-slat { background: linear-gradient(180deg,#eef2ff,#cdd8ff); color:#0a1638; border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; font-family:var(--font-cond); font-weight:700; margin-bottom:6px; }
+    .mini-preview .mp-slat .p { background: var(--c-primary); color:#fff; padding:0 10px; border-radius:5px; }
+    .mini-preview .mp-title { font-family: var(--font-display); font-size:26px; color:#fff; }
+    .mini-preview .mp-title .a { color: var(--c-accent); }
+    input[type=file] { display:none; }
+  </style>
+</head>
+<body>
+  <div class="set-root">
+    <div class="set-head">
+      <div class="brand-logo" data-brand-logo></div>
+      <h1>Branding &amp; Theme</h1>
+      <div class="spacer"></div>
+      <a class="btn ghost sm" href="control.html">Control</a>
+      <a class="btn ghost sm" href="index.html">Home</a>
+    </div>
+
+    <div class="set-grid">
+      <!-- LEFT column -->
+      <div>
+        <div class="panel" style="margin-bottom:16px">
+          <h2>Client &amp; Titles</h2>
+          <div class="field"><label class="fld">Client name</label><input type="text" id="clientName" placeholder="Acme Corp Holiday Party" /></div>
+          <div class="field"><label class="fld">Board title</label><input type="text" id="title" placeholder="FAMILY FEUD" /></div>
+          <div class="field"><label class="fld">Subtitle / tagline</label><input type="text" id="subtitle" placeholder="SURVEY SHOWDOWN" /></div>
+        </div>
+
+        <div class="panel" style="margin-bottom:16px">
+          <h2>Logo</h2>
+          <div class="logo-drop" id="logoDrop">
+            <div class="logo-preview" id="logoPreview"></div>
+            <div id="logoHint">Click or drop an image (PNG/JPG/SVG).<br/>Shown on every board &amp; screen.</div>
+          </div>
+          <input type="file" id="logoFile" accept="image/*" />
+          <button class="btn ghost sm" id="logoClear">Remove logo</button>
+        </div>
+
+        <div class="panel">
+          <h2>Color Presets</h2>
+          <div class="preset-row" id="presets"></div>
+          <div class="swatch-row" id="swatches"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT column -->
+      <div>
+        <div class="panel" style="margin-bottom:16px">
+          <h2>Live Preview</h2>
+          <div class="mini-preview">
+            <div class="brand-logo" data-brand-logo style="margin:0 auto 8px"></div>
+            <div class="mp-title"><span id="mpT">FAMILY</span> <span class="a" id="mpT2">FEUD</span></div>
+            <div class="mp-board">
+              <div class="mp-slat"><span>Check your phone</span><span class="p">34</span></div>
+              <div class="mp-slat"><span>Hit the snooze</span><span class="p">24</span></div>
+              <div class="mp-slat"><span>Grab a coffee</span><span class="p">15</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Client Profiles</h2>
+          <p class="hint" style="color:#9fb0e6;font-size:13px;margin-bottom:10px">Save the current logo, colors, titles &amp; questions as a reusable profile per client.</p>
+          <div class="field"><input type="text" id="profileName" placeholder="New profile name…" /></div>
+          <button class="btn green sm" id="saveProfile" style="margin-bottom:12px">💾 Save current as profile</button>
+          <div class="profiles-list" id="profilesList"></div>
+          <hr style="border-color:rgba(255,255,255,.1); margin:14px 0" />
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost sm" id="exportAll">⭳ Export full config</button>
+            <button class="btn ghost sm" id="importAll">⭱ Import full config</button>
+            <input type="file" id="importAllFile" accept="application/json,.json" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/settings.js"></script>
+</body>
+</html>
