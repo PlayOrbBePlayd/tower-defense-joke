@@ -91,6 +91,13 @@
       used: {},                // {"c:r": true}
       awardSign: 1,            // +1 award / -1 deduct
       countdownId: 0,          // bump to play the Jeopardy countdown on the board
+      sweepId: 0,              // bump to play the category intro sweep
+      // 30-second clue clock (host-driven, board displays it)
+      timerSec: 30, timerMax: 30, timerRun: false,
+      // Final Jeopardy
+      final: { stage: null },  // null | 'category' | 'clue' | 'answer'
+      finalWagers: {},         // {teamIdx: wager}
+      finalApplied: {},        // {teamIdx: 'win'|'loss'}
     },
 
     // ---- Which mode the BOARD is currently showing ----
@@ -152,6 +159,10 @@
     // Older saves predate the Jeopardy bank — seed it from defaults.
     if (!merged.questions.jeopardy && global.FF_DEFAULT_QUESTIONS) {
       merged.questions.jeopardy = clone(global.FF_DEFAULT_QUESTIONS.jeopardy);
+    }
+    // ...and the Final Jeopardy clue.
+    if (merged.questions.jeopardy && !merged.questions.jeopardy.final && global.FF_DEFAULT_QUESTIONS) {
+      merged.questions.jeopardy.final = clone(global.FF_DEFAULT_QUESTIONS.jeopardy.final);
     }
     if (!Array.isArray(merged.main.revealed)) merged.main.revealed = [];
     // Pad older saves' fast-money slots up to the current count (5 -> 8).

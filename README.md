@@ -98,6 +98,17 @@ cascade reveal, tile sheen, and a "clues left" counter in the header.
   gold **DAILY DOUBLE!** splash before the clue, and the host panel gets a
   wager box — award/deduct uses the wager instead of the tile value. Only the
   host can see which tiles are daily doubles.
+- **🎥 Category Sweep**: a cinematic intro — each category slams across the
+  screen in turn, then the board cascades in.
+- **⏱ 30-second clue clock**: start it from the clue panel; a countdown ring
+  appears on the board and at zero the question box flips from blue to bright
+  red with a buzzer.
+- **🏆 Final Jeopardy**: one dramatic clue to end the round. Stage 1 shows the
+  category while teams lock in secret wagers (host records each team's wager);
+  Stage 2 shows the clue (timer optional); Stage 3 reveals the answer — then
+  mark each team ✓ right / ✗ wrong and their wager is added or deducted
+  automatically (one click each, no double-applies). Edit the Final clue in
+  Editor → Jeopardy (gold card at the top).
 
 ## The two game modes
 

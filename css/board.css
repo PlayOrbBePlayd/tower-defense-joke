@@ -483,6 +483,49 @@
   border: 2px solid #fff; border-radius: 999px; padding: 5px 24px;
   font-size: clamp(13px, 1.8vw, 24px); box-shadow: 0 8px 22px rgba(0,0,0,.45); }
 
+/* Category intro sweep */
+.jp-sw { position: fixed; inset: 0; z-index: 80; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(14px,3vh,36px);
+  background: radial-gradient(1300px 900px at 50% 32%, #0a2470, #030a26 78%); }
+.jp-sw .intro-rays { will-change: transform; }
+.jp-sw-kicker { font-family: var(--font-cond); font-weight: 700; letter-spacing: .4em; text-transform: uppercase;
+  color: var(--c-accent); font-size: clamp(14px, 2vw, 30px); position: relative; z-index: 2;
+  animation: popIn .5s cubic-bezier(.2,1.6,.4,1) both; }
+.jp-sw-stage { position: relative; z-index: 2; display: grid; place-items: center;
+  width: 100%; min-height: clamp(120px, 26vh, 300px); }
+.jp-sw-cat { grid-area: 1/1; font-family: var(--font-display); text-align: center;
+  font-size: clamp(44px, 8.5vw, 150px); line-height: 1; color: #fff; max-width: 92vw;
+  text-shadow: 0 6px 0 var(--c-primary-dk), 0 10px 26px rgba(0,0,0,.6);
+  opacity: 0; animation: swSlide 1.4s cubic-bezier(.25,.9,.3,1) both;
+  will-change: transform, opacity; }
+.jp-sw-cat:nth-child(even) { color: var(--c-accent); text-shadow: 0 6px 0 var(--c-accent-dk), 0 0 34px var(--c-primary-glow); }
+@keyframes swSlide {
+  0%   { opacity: 0; transform: translateX(55vw) scale(1.25); }
+  16%  { opacity: 1; transform: translateX(0) scale(1); }
+  80%  { opacity: 1; transform: translateX(0) scale(1.04); }
+  100% { opacity: 0; transform: translateX(-55vw) scale(.85); }
+}
+
+/* Final Jeopardy category screen */
+.jp-final { position: fixed; inset: 0; z-index: 80; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(14px,3vh,40px); text-align: center;
+  background: radial-gradient(1300px 900px at 50% 32%, #1a1148, #05030f 78%); }
+.jp-final .intro-rays { will-change: transform; }
+.jf-kicker { font-family: var(--font-display); font-size: clamp(34px, 6vw, 100px); color: var(--c-accent);
+  text-shadow: 0 5px 0 var(--c-accent-dk), 0 0 34px var(--c-primary-glow); position: relative; z-index: 2;
+  animation: slamBounce .8s cubic-bezier(.2,1.1,.35,1) both; will-change: transform, opacity; }
+.jf-cat { font-family: var(--font-cond); font-weight: 700; text-transform: uppercase; color: #fff;
+  font-size: clamp(30px, 5.4vw, 84px); line-height: 1.05; max-width: 90vw; position: relative; z-index: 2;
+  background: linear-gradient(180deg, #123a9e, #0a2470); border: 3px solid var(--c-accent);
+  border-radius: 18px; padding: clamp(12px,2.4vh,26px) clamp(26px,4vw,60px);
+  box-shadow: 0 18px 50px rgba(0,0,0,.5); opacity: 0;
+  animation: popIn .55s cubic-bezier(.2,1.5,.4,1) .7s forwards; will-change: transform, opacity; }
+.jf-sub { font-family: var(--font-cond); font-weight: 700; letter-spacing: .34em; text-transform: uppercase;
+  color: var(--c-accent); font-size: clamp(13px, 2vw, 28px); position: relative; z-index: 2;
+  opacity: 0; animation: popIn .5s ease 1.2s forwards, bulb 1.1s ease-in-out 1.8s infinite; will-change: transform, opacity; }
+
 /* Full-screen clue view */
 .jp-clue { flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
   gap: clamp(14px, 3.4vh, 44px); text-align:center; padding: 0 4vw;
@@ -492,8 +535,27 @@
   color:#9fb0e6; font-size: clamp(14px, 2vw, 28px); }
 .jp-cat b { color: var(--c-accent); font-family: var(--font-display); letter-spacing:.04em; }
 .jp-q { font-family: var(--font-cond); font-weight:700; color:#fff; text-wrap:balance;
-  font-size: clamp(30px, 4.8vw, 84px); line-height:1.12; max-width: 1500px;
-  text-shadow: 0 4px 0 rgba(0,0,0,.35), 0 12px 34px rgba(0,0,0,.5); }
+  font-size: clamp(28px, 4.4vw, 76px); line-height:1.12; max-width: 1500px;
+  background: linear-gradient(180deg, #123a9e, #0a2470);
+  border-radius: 20px; padding: clamp(14px,2.6vh,30px) clamp(22px,3vw,50px);
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.16), 0 14px 40px rgba(0,0,0,.45);
+  text-shadow: 0 4px 0 rgba(0,0,0,.35), 0 12px 34px rgba(0,0,0,.5);
+  transition: background .3s, box-shadow .3s; }
+/* Time's up: the question box flips from blue to bright red */
+.jp-clue.times-up .jp-q {
+  background: linear-gradient(180deg, #ff3b3b, #c40f0f);
+  box-shadow: inset 0 0 0 3px #fff, 0 0 60px rgba(255,40,40,.7), 0 14px 40px rgba(0,0,0,.45);
+  animation: timeUpPulse .8s ease-in-out infinite; }
+@keyframes timeUpPulse { 0%,100%{ filter:brightness(1);} 50%{ filter:brightness(1.25);} }
+
+/* Clue clock (top-right of the clue view) */
+.jp-timer { position: fixed; top: clamp(90px,14vh,150px); right: clamp(16px,2.4vw,40px); z-index: 5;
+  width: clamp(72px, 10vh, 130px); height: clamp(72px, 10vh, 130px); }
+.jp-timer svg { width: 100%; height: 100%; }
+.jp-timer .t-num { position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--font-display); font-size: clamp(26px, 4.4vh, 56px); color: #fff; }
+.jp-timer.warn .t-num { color: #ff5b5b; }
+.jp-timer.warn .jp-ring { stroke: #ff5b5b; }
 .jp-choices { display:grid; grid-template-columns: 1fr 1fr; gap: clamp(10px,1.6vh,20px); width:min(1250px, 94%); }
 .jp-choices.tf { grid-template-columns: repeat(2, minmax(0, 380px)); justify-content:center; }
 .jp-choice { display:flex; align-items:center; gap: 14px; text-align:left;

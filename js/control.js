@@ -389,11 +389,13 @@
     g.innerHTML = html || '<p class="hint">No Jeopardy categories yet — add some in the Editor.</p>';
     g.querySelectorAll('button[data-jp]').forEach((b) => { b.onclick = () => openJpClue(b.dataset.jp); });
     updateJpCluePanel();
+    updateJpFinalPanel();
   }
 
   function openJpClue(k) {
     const [c, r] = k.split(':').map(Number);
-    Store.patch((s) => { s.jeop.active = { c, r, showAnswer: false }; s.boardMode = 'jeopardy'; });
+    jpResetTimer();
+    Store.patch((s) => { s.jeop.active = { c, r, showAnswer: false }; s.jeop.final = { stage: null }; s.boardMode = 'jeopardy'; });
     Sound.flip();
     renderJpGrid();
   }
@@ -453,9 +455,99 @@
   $('jpBack').onclick = () => { Store.patch((s) => { s.jeop.active = null; }); renderJpGrid(); };
   $('jpWager').oninput = () => updateJpCluePanel();
   $('jpCountdown').onclick = () => {
-    Store.patch((s) => { s.boardMode = 'jeopardy'; s.jeop.active = null; s.jeop.countdownId = (s.jeop.countdownId || 0) + 1; });
+    Store.patch((s) => { s.boardMode = 'jeopardy'; s.jeop.active = null; s.jeop.final = { stage: null }; s.jeop.countdownId = (s.jeop.countdownId || 0) + 1; });
     toast('🎬 Jeopardy countdown rolling!');
   };
+  $('jpSweep').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'jeopardy'; s.jeop.active = null; s.jeop.final = { stage: null }; s.jeop.sweepId = (s.jeop.sweepId || 0) + 1; });
+    toast('🎥 Category sweep rolling!');
+  };
+
+  /* ---- 30-second clue clock ---- */
+  let jpTimerInt = null;
+  function jpStartTimer() {
+    clearInterval(jpTimerInt);
+    Store.patch((s) => { s.jeop.timerSec = 30; s.jeop.timerMax = 30; s.jeop.timerRun = true; });
+    jpTimerInt = setInterval(() => {
+      const cur = S().jeop.timerSec;
+      if (cur <= 0) { clearInterval(jpTimerInt); Store.patch((s) => { s.jeop.timerRun = false; }); return; }
+      Store.patch((s) => { s.jeop.timerSec = cur - 1; });
+    }, 1000);
+  }
+  function jpResetTimer() {
+    clearInterval(jpTimerInt);
+    Store.patch((s) => { s.jeop.timerRun = false; s.jeop.timerSec = s.jeop.timerMax = 30; });
+  }
+  $('jpTimerBtn').onclick = () => { jpStartTimer(); toast('⏱ 30 seconds!'); };
+  $('jpTimerStop').onclick = () => { jpResetTimer(); };
+  $('jfTimer').onclick = () => { jpStartTimer(); toast('⏱ 30 seconds!'); };
+
+  /* ---- Final Jeopardy ---- */
+  function jfClue() { return jpData().final || {}; }
+
+  $('jpFinalBtn').onclick = () => {
+    jpResetTimer();
+    Store.patch((s) => {
+      s.boardMode = 'jeopardy'; s.jeop.active = null;
+      s.jeop.final = { stage: 'category' };
+      s.jeop.finalWagers = s.jeop.finalWagers || {};
+      s.jeop.finalApplied = {};
+    });
+    updateJpFinalPanel();
+    toast('🏆 Final Jeopardy — collect those wagers!');
+  };
+  $('jfStage1').onclick = () => { Store.patch((s) => { s.jeop.final.stage = 'category'; }); updateJpFinalPanel(); };
+  $('jfStage2').onclick = () => { Store.patch((s) => { s.jeop.final.stage = 'clue'; }); updateJpFinalPanel(); };
+  $('jfStage3').onclick = () => { jpResetTimer(); Store.patch((s) => { s.jeop.final.stage = 'answer'; }); updateJpFinalPanel(); };
+  $('jfExit').onclick = () => {
+    jpResetTimer();
+    Store.patch((s) => { s.jeop.final = { stage: null }; });
+    updateJpFinalPanel(); renderJpGrid();
+  };
+
+  function updateJpFinalPanel() {
+    const s = S(); const fin = s.jeop.final || {};
+    const panel = $('jpFinal');
+    panel.classList.toggle('hidden', !fin.stage);
+    if (!fin.stage) return;
+    $('jpClueCtl').classList.add('hidden');   // final replaces the clue panel
+    const F = jfClue();
+    $('jfQ').textContent = (F.category ? F.category + ' — ' : '') + (F.q || '(set the Final Jeopardy clue in the Editor)');
+    $('jfA').textContent = '✔ ' + jpAnswerText(F);
+    ['jfStage1', 'jfStage2', 'jfStage3'].forEach((id, i) => {
+      const stageName = ['category', 'clue', 'answer'][i];
+      $(id).classList.toggle('on', fin.stage === stageName);
+    });
+    // wager rows
+    $('jfWagers').innerHTML = s.teams.map((t, i) => {
+      const applied = (s.jeop.finalApplied || {})[i];
+      const w = (s.jeop.finalWagers || {})[i];
+      return `<div class="jf-row">
+        <span class="nm">${escHtml(t.name)}<b>${t.score}</b></span>
+        <input type="number" min="0" placeholder="wager" value="${w != null ? w : ''}" data-jfw="${i}" ${applied ? 'disabled' : ''} />
+        <button class="btn green sm" data-jfok="${i}" ${applied ? 'disabled' : ''}>✓</button>
+        <button class="btn red sm" data-jfno="${i}" ${applied ? 'disabled' : ''}>✗</button>
+        <span class="res ${applied === 'win' ? 'win' : applied === 'loss' ? 'loss' : ''}">${applied === 'win' ? 'WON' : applied === 'loss' ? 'LOST' : ''}</span>
+      </div>`;
+    }).join('');
+    $('jfWagers').querySelectorAll('[data-jfw]').forEach((inp) => {
+      inp.onchange = () => Store.patch((st) => { st.jeop.finalWagers[+inp.dataset.jfw] = Math.max(0, +inp.value || 0); });
+    });
+    $('jfWagers').querySelectorAll('[data-jfok]').forEach((b) => { b.onclick = () => jfApply(+b.dataset.jfok, true); });
+    $('jfWagers').querySelectorAll('[data-jfno]').forEach((b) => { b.onclick = () => jfApply(+b.dataset.jfno, false); });
+  }
+
+  function jfApply(i, won) {
+    const s = S();
+    const w = Math.max(0, +((s.jeop.finalWagers || {})[i]) || 0);
+    Store.patch((st) => {
+      st.teams[i].score = Math.max(0, st.teams[i].score + (won ? w : -w));
+      st.jeop.finalApplied[i] = won ? 'win' : 'loss';
+    });
+    if (won) Sound.reveal(); else Sound.strike();
+    toast((won ? '+' : '−') + w + ' → ' + s.teams[i].name);
+    updateJpFinalPanel();
+  }
   $('jpResetBoard').onclick = () => {
     if (!confirm('Reset the Jeopardy board? All tiles come back (team scores are kept).')) return;
     Store.patch((s) => { s.jeop.used = {}; s.jeop.active = null; });

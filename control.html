@@ -137,7 +137,9 @@
           <div class="jpc-top">
             <span class="hint" style="margin:0">Tap a tile to put the clue on the board. Questions, categories, board size and ◆ daily doubles live in the
               <a href="editor.html" target="_blank" style="color:var(--c-accent)">Editor → Jeopardy</a>.</span>
-            <button class="btn red sm" id="jpCountdown">🎬 Play Countdown → Board</button>
+            <button class="btn red sm" id="jpCountdown">🎬 Countdown → Board</button>
+            <button class="btn blue sm" id="jpSweep">🎥 Category Sweep</button>
+            <button class="btn gold sm" id="jpFinalBtn">🏆 Final Jeopardy</button>
             <button class="btn ghost sm" id="jpResetBoard">↺ Reset board</button>
           </div>
           <div class="jpc-grid" id="jpGrid"></div>
@@ -151,6 +153,8 @@
             </div>
             <div class="jpc-actions">
               <button class="btn gold" id="jpReveal">💡 Reveal Answer</button>
+              <button class="btn blue sm" id="jpTimerBtn">⏱ Start 30s</button>
+              <button class="btn ghost sm" id="jpTimerStop">⏹</button>
               <span class="fo-group">
                 <button class="btn green sm" id="jpSignPlus">＋ Award</button>
                 <button class="btn red sm" id="jpSignMinus">－ Deduct</button>
@@ -163,6 +167,25 @@
             </div>
             <div class="ea-hint">Tap a team to apply the value:</div>
             <div class="ea-grid" id="jpAward"></div>
+          </div>
+
+          <!-- Final Jeopardy controls -->
+          <div class="jpc-clue hidden" id="jpFinal">
+            <div class="jpc-info">
+              <span class="jpc-cat">🏆 FINAL JEOPARDY</span>
+              <span class="jpc-q" id="jfQ"></span>
+              <span class="jpc-a" id="jfA"></span>
+            </div>
+            <div class="jpc-actions">
+              <button class="btn gold sm" id="jfStage1">1 · Category &amp; Wagers</button>
+              <button class="btn blue sm" id="jfStage2">2 · Show Clue</button>
+              <button class="btn green sm" id="jfStage3">3 · Reveal Answer</button>
+              <button class="btn blue sm" id="jfTimer">⏱ Start 30s</button>
+              <span class="ea-spacer" style="flex:1"></span>
+              <button class="btn ghost sm" id="jfExit">✕ Exit Final</button>
+            </div>
+            <div class="ea-hint">Collect each team's secret wager, then mark ✓ right / ✗ wrong after the reveal:</div>
+            <div id="jfWagers"></div>
           </div>
         </div>
 
