@@ -98,6 +98,13 @@ cascade reveal, tile sheen, and a "clues left" counter in the header.
   gold **DAILY DOUBLE!** splash before the clue, and the host panel gets a
   wager box — award/deduct uses the wager instead of the tile value. Only the
   host can see which tiles are daily doubles.
+- **Title pages gate every game**: the board's default screen is always the
+  fixed **"GAME SHOW ROUNDUP! — Presented by TeamBuilding ROI"** title. Clicking
+  into Jeopardy shows the **TBROI JEOPARDY!** title page, and clicking into
+  Family Feud shows the **Feud title page** — players never see a game board
+  until the host explicitly starts it (▶ Show Board / the face-off strip).
+- **🎬 3-2-1 Countdown**: plays on the Jeopardy title page and **holds there**
+  (title throbbing, lights on) until the host presses **▶ Show Board**.
 - **🎥 Category Sweep**: a cinematic intro — each category slams across the
   screen in turn, then the board cascades in.
 - **⏱ 30-second clue clock**: start it from the clue panel; a countdown ring

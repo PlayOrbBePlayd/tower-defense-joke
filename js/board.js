@@ -76,6 +76,8 @@
     if (s.boardMode === 'intro') renderIntro(s);
     else if (s.boardMode === 'outro') renderOutro(s);
     else if (s.boardMode === 'jeopardy') renderJeopardy(s);
+    else if (s.boardMode === 'jeopardy-title') renderJeopardyTitle(s);
+    else if (s.boardMode === 'feud-title') renderFeudTitle(s);
     else if (s.boardMode === 'main') renderMain(s);
     else if (s.boardMode === 'fast') renderFast(s);
     else if (s.boardMode === 'leaderboard') renderLeaderboard(s);
@@ -88,7 +90,7 @@
 
     // Jeopardy branding: hide the score/clue pods and retitle the center
     // plate. (Runs after routing so it wins over Theme.apply's title.)
-    const isJp = s.boardMode === 'jeopardy';
+    const isJp = s.boardMode === 'jeopardy' || s.boardMode === 'jeopardy-title';
     pod0.style.visibility = isJp ? 'hidden' : '';
     pod1.style.visibility = isJp ? 'hidden' : '';
     const plate = document.querySelector('.board-brand .plate-title');
@@ -113,27 +115,74 @@
     }
   }
 
-  /* ---------------- LOGO / IDLE ---------------- */
+  /* ---------------- MASTER TITLE (default screen — always the same) ------- */
   function renderLogo(s) {
-    const key = (s.theme.title || '') + '|' + (s.theme.subtitle || '');
-    if (prev.boardMode !== 'logo' || prev.logoKey !== key) {
-      stage.innerHTML = logoHtml(s);
+    if (prev.boardMode !== 'logo') {
+      stage.innerHTML = `
+        <div class="logo-screen">
+          <div class="brand-logo" data-brand-logo></div>
+          <div class="big-title">GAME SHOW <span class="accent">ROUNDUP!</span></div>
+          <div class="sub">PRESENTED BY TEAMBUILDING ROI</div>
+          <div class="marquee">${'<span class="bulb"></span>'.repeat(9)}</div>
+        </div>`;
       prev.boardMode = 'logo';
-      prev.logoKey = key;
     }
     Theme.apply();
   }
-  function logoHtml(s) {
+
+  /* ---------------- FAMILY FEUD TITLE PAGE ---------------- */
+  // Shown when the host clicks into the Feud game — players see this, never
+  // the board, until the host explicitly starts the round.
+  function renderFeudTitle(s) {
     const title = (s.theme.title || 'FAMILY FEUD');
-    const parts = title.split(' ');
-    const last = parts.pop();
-    const first = parts.join(' ');
+    const key = title + '|' + (s.theme.subtitle || '');
+    if (prev.boardMode !== 'feud-title' || prev.ftKey !== key) {
+      const parts = title.split(' ');
+      const last = parts.pop();
+      const first = parts.join(' ');
+      stage.innerHTML = `
+        <div class="logo-screen">
+          <div class="brand-logo" data-brand-logo></div>
+          <div class="big-title">${escapeHtml(first)} <span class="accent">${escapeHtml(last)}</span></div>
+          <div class="sub" data-brand-subtitle>${escapeHtml(s.theme.subtitle || '')}</div>
+          <div class="marquee">${'<span class="bulb"></span>'.repeat(9)}</div>
+        </div>`;
+      if (prev.boardMode === 'feud-title' || prev.boardMode) { /* no sound spam on load */ }
+      prev.boardMode = 'feud-title';
+      prev.ftKey = key;
+    }
+    Theme.apply();
+  }
+
+  /* ---------------- JEOPARDY TITLE PAGE (with optional 3-2-1) ------------- */
+  // The countdown plays 3-2-1 then slams the title — and HOLDS here until the
+  // host explicitly shows the board.
+  function renderJeopardyTitle(s) {
+    const cdFresh = s.jeop.countdownId && s.jeop.countdownId !== prev.jpCdId;
+    const key = 'jpt|' + (s.jeop.countdownId || 0);
+    if (prev.boardMode !== 'jeopardy-title' || prev.jptKey !== key) {
+      if (cdFresh) {
+        prev.jpCdId = s.jeop.countdownId;
+        stage.innerHTML = jpTitleHtml(true);
+        const cue = (ms, fn) => setTimeout(() => { if (Store.get().boardMode === 'jeopardy-title') fn(); }, ms);
+        Sound.flip(); cue(1000, () => Sound.flip()); cue(2000, () => Sound.flip());
+        cue(3000, () => Sound.fanfare());
+      } else {
+        stage.innerHTML = jpTitleHtml(false);
+        if (prev.boardMode && prev.boardMode !== 'jeopardy-title') Sound.ding();
+      }
+      prev.boardMode = 'jeopardy-title';
+      prev.jptKey = key;
+    }
+    Theme.apply();
+  }
+  function jpTitleHtml(withCountdown) {
     return `
-      <div class="logo-screen">
-        <div class="brand-logo" data-brand-logo></div>
-        <div class="big-title">${escapeHtml(first)} <span class="accent">${escapeHtml(last)}</span></div>
-        <div class="sub" data-brand-subtitle>${escapeHtml(s.theme.subtitle || '')}</div>
-        <div class="marquee">${'<span class="bulb"></span>'.repeat(9)}</div>
+      <div class="jp-cd">
+        <div class="intro-rays"></div>
+        ${withCountdown ? '<div class="intro-count"><span>3</span><span>2</span><span>1</span></div>' : ''}
+        <div class="jp-cd-title ${withCountdown ? '' : 'now'}">TBROI <span>JEOPARDY!</span></div>
+        <div class="jp-cd-sub ${withCountdown ? '' : 'now'}">GET READY TO RING IN…</div>
       </div>`;
   }
 
@@ -250,29 +299,61 @@
     const J = s.questions.jeopardy || { categories: [] };
     const act = s.jeop.active;
 
-    // 3-2-1 countdown, then the board cascades in.
-    if (s.jeop.countdownId && s.jeop.countdownId !== prev.jpCdId) {
-      prev.jpCdId = s.jeop.countdownId;
-      jpCdUntil = performance.now() + 4400;
+    if (performance.now() < jpCdUntil) return;   // sweep still playing
+
+    // Category intro sweep — each category slams across the screen in turn.
+    if (s.jeop.sweepId && s.jeop.sweepId !== prev.jpSwId) {
+      prev.jpSwId = s.jeop.sweepId;
+      const cats = J.categories;
+      const total = cats.length * 1400 + 900;
+      jpCdUntil = performance.now() + total;
+      const slides = cats.map((c, i) =>
+        `<div class="jp-sw-cat" style="animation-delay:${(i * 1.4).toFixed(1)}s">${escapeHtml(c.name)}</div>`).join('');
       stage.innerHTML = `
-        <div class="jp-cd">
+        <div class="jp-sw">
           <div class="intro-rays"></div>
-          <div class="intro-count"><span>3</span><span>2</span><span>1</span></div>
-          <div class="jp-cd-title">TBROI <span>JEOPARDY!</span></div>
-          <div class="jp-cd-sub">GET READY TO RING IN…</div>
+          <div class="jp-sw-kicker">TODAY'S CATEGORIES</div>
+          <div class="jp-sw-stage">${slides}</div>
         </div>`;
-      prev.boardMode = 'jeopardy'; prev.jeopKey = 'cd';
+      prev.boardMode = 'jeopardy'; prev.jeopKey = 'sweep';
       const cue = (ms, fn) => setTimeout(() => { if (Store.get().boardMode === 'jeopardy') fn(); }, ms);
-      Sound.flip(); cue(1000, () => Sound.flip()); cue(2000, () => Sound.flip());
-      cue(3000, () => Sound.fanfare());
+      cats.forEach((c, i) => cue(i * 1400 + 150, () => Sound.flip()));
+      cue(total - 700, () => Sound.fanfare());
       setTimeout(() => {
         jpCdUntil = 0; jpForceCascade = true;
         if (Store.get().boardMode === 'jeopardy') { prev.jeopKey = 'after-cd'; render(); }
-      }, 4400);
+      }, total);
       Theme.apply();
       return;
     }
-    if (performance.now() < jpCdUntil) return;   // countdown still playing
+
+    // Final Jeopardy stages: category+wagers → clue → answer.
+    const fin = s.jeop.final;
+    if (fin && fin.stage) {
+      const F = J.final || {};
+      const key = 'final|' + fin.stage + '|' + (F.q || '') + '|' + (F.category || '');
+      if (prev.boardMode !== 'jeopardy' || prev.jeopKey !== key) {
+        const wasFinal = String(prev.jeopKey || '').startsWith('final|');
+        if (fin.stage === 'category') {
+          stage.innerHTML = `
+            <div class="jp-final">
+              <div class="intro-rays"></div>
+              <div class="jf-kicker">FINAL JEOPARDY</div>
+              <div class="jf-cat">${escapeHtml(F.category || '???')}</div>
+              <div class="jf-sub">LOCK IN YOUR WAGERS…</div>
+            </div>`;
+          if (prev.boardMode === 'jeopardy') Sound.fanfare();
+        } else {
+          const fakeJ = { categories: [{ name: 'FINAL · ' + (F.category || 'JEOPARDY'), clues: [Object.assign({ value: '★' }, F, { dd: false })] }] };
+          stage.innerHTML = jeopClueHtml(s, fakeJ, { c: 0, r: 0, showAnswer: fin.stage === 'answer' });
+          if (wasFinal) { if (fin.stage === 'answer') Sound.ding(); else Sound.flip(); }
+        }
+        prev.boardMode = 'jeopardy'; prev.jeopKey = key;
+      }
+      updateJpTimer(s);
+      Theme.apply();
+      return;
+    }
 
     // Category intro sweep — each category slams across the screen in turn.
     if (s.jeop.sweepId && s.jeop.sweepId !== prev.jpSwId) {

@@ -27,13 +27,16 @@
     $('eventPanel').classList.toggle('hidden', !isEvent);
     $('jeopPanel').classList.toggle('hidden', !isJeop);
     if (isJeop) renderJpGrid();
-    // Event tab drives the board to the leaderboard. "Main Game" in event mode
-    // opens on the round's MATCHUP screen until play/pass has decided control —
-    // never spoiling the question or the board. After the face-off it goes
-    // straight to the answer board as before.
+    // Players never see a game board just from clicking into a game:
+    // - "Main Game" opens on the FEUD TITLE page until play/pass has decided
+    //   control (mid-round it returns to the live board).
+    // - "Jeopardy" opens on the JEOPARDY TITLE page unless a clue or Final
+    //   Jeopardy is already live.
+    // The host starts each game explicitly (face-off strip / Show Board).
     Store.patch((s) => {
       let bm = isEvent ? 'leaderboard' : mode;
-      if (mode === 'main' && s.event.on && (!s.event.faceoff || s.event.faceoff.control == null)) bm = 'matchup';
+      if (mode === 'main' && (!s.event.faceoff || s.event.faceoff.control == null)) bm = 'feud-title';
+      if (mode === 'jeopardy' && !s.jeop.active && !(s.jeop.final && s.jeop.final.stage)) bm = 'jeopardy-title';
       s.boardMode = bm;
     });
     if (isEvent) buildRoster();
@@ -454,9 +457,19 @@
   };
   $('jpBack').onclick = () => { Store.patch((s) => { s.jeop.active = null; }); renderJpGrid(); };
   $('jpWager').oninput = () => updateJpCluePanel();
+  $('jpTitleBtn').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'jeopardy-title'; s.jeop.active = null; s.jeop.final = { stage: null }; });
+    toast('🏷 Jeopardy title page up');
+  };
+  // Countdown plays 3-2-1 + title slam on the TITLE page, then HOLDS there
+  // until the host explicitly shows the board.
   $('jpCountdown').onclick = () => {
-    Store.patch((s) => { s.boardMode = 'jeopardy'; s.jeop.active = null; s.jeop.final = { stage: null }; s.jeop.countdownId = (s.jeop.countdownId || 0) + 1; });
-    toast('🎬 Jeopardy countdown rolling!');
+    Store.patch((s) => { s.boardMode = 'jeopardy-title'; s.jeop.active = null; s.jeop.final = { stage: null }; s.jeop.countdownId = (s.jeop.countdownId || 0) + 1; });
+    toast('🎬 3-2-1… holds on the title until you press Show Board');
+  };
+  $('jpShowBoard').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'jeopardy'; s.jeop.active = null; s.jeop.final = { stage: null }; });
+    toast('▶ Jeopardy board revealed!');
   };
   $('jpSweep').onclick = () => {
     Store.patch((s) => { s.boardMode = 'jeopardy'; s.jeop.active = null; s.jeop.final = { stage: null }; s.jeop.sweepId = (s.jeop.sweepId || 0) + 1; });
@@ -565,6 +578,7 @@
     return [a, b];
   }
 
+  $('foTitle').onclick = () => { Store.patch((s) => { s.boardMode = 'feud-title'; }); syncTabs(); Sound.click(); };
   $('foMatchup').onclick = () => { Store.patch((s) => { s.boardMode = 'matchup'; }); syncTabs(); Sound.click(); };
   $('foQuestion').onclick = () => { Store.patch((s) => { s.boardMode = 'question'; }); syncTabs(); Sound.click(); };
   $('foBuzzA').onclick = () => buzz(0);
@@ -707,14 +721,16 @@
   /* ---------------- sync from other windows ---------------- */
   function syncTabs() {
     const s = S();
+    const isJp = s.boardMode === 'jeopardy' || s.boardMode === 'jeopardy-title';
     const tab = s.boardMode === 'leaderboard' ? 'event'
-      : (s.boardMode === 'matchup' || s.boardMode === 'question') ? 'main'
+      : (s.boardMode === 'matchup' || s.boardMode === 'question' || s.boardMode === 'feud-title') ? 'main'
+      : isJp ? 'jeopardy'
       : s.boardMode;
     $('modeTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.mode === tab));
-    $('mainPanel').classList.toggle('hidden', s.boardMode === 'fast' || s.boardMode === 'leaderboard' || s.boardMode === 'jeopardy');
+    $('mainPanel').classList.toggle('hidden', s.boardMode === 'fast' || s.boardMode === 'leaderboard' || isJp);
     $('fastPanel').classList.toggle('hidden', s.boardMode !== 'fast');
     $('eventPanel').classList.toggle('hidden', s.boardMode !== 'leaderboard');
-    $('jeopPanel').classList.toggle('hidden', s.boardMode !== 'jeopardy');
+    $('jeopPanel').classList.toggle('hidden', !isJp);
   }
 
   Store.subscribe(() => {
