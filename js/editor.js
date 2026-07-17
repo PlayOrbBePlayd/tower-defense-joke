@@ -128,18 +128,24 @@
           <input type="number" id="jeCats" min="1" max="8" value="${cats.length || 5}" />
           <label class="fld" style="margin:0">Clues per category</label>
           <input type="number" id="jePer" min="1" max="8" value="${per || 5}" />
-          <span class="sum">Answer formats per clue: multiple choice, true/false, or type-in. Values default to row × 100.</span>
+          <span class="sum">Answer formats per clue: multiple choice (default), true/false, or type-in. Values default to row × 100.</span> <span class="sum" id="jeDdCount"></span>
         </div>
       </div>` + cats.map((c, ci) => jeCatCard(c, ci)).join('');
 
     $('jeCats').onchange = () => resizeJeop(+$('jeCats').value || 5, +$('jePer').value || 5);
     $('jePer').onchange = () => resizeJeop(+$('jeCats').value || 5, +$('jePer').value || 5);
 
+    updateDdCount();
+
     // One delegated handler covers every clue field.
     $('list').querySelectorAll('[data-je]').forEach((el) => {
       el.onchange = el.oninput = () => {
         const p = el.dataset.je.split(':');
         const kind = p[0], ci = +p[1], ri = +p[2];
+        if (kind === 'dd' && el.checked) {
+          const count = J().categories.reduce((t, c) => t + c.clues.filter((x) => x.dd).length, 0);
+          if (count >= 5) { el.checked = false; toast('Max 5 daily doubles'); return; }
+        }
         Store.patch((s) => {
           const cat = s.questions.jeopardy.categories[ci]; if (!cat) return;
           if (kind === 'catname') { cat.name = el.value; return; }
@@ -150,6 +156,7 @@
           else if (kind === 'ansmc') clue.answer = +el.value;
           else if (kind === 'anstf') clue.answer = el.value === 'true';
           else if (kind === 'anstext') clue.answer = el.value;
+          else if (kind === 'dd') clue.dd = el.checked;
           else if (kind === 'type') {
             clue.type = el.value;
             if (clue.type === 'mc') { if (!Array.isArray(clue.choices)) clue.choices = ['', '', '', '']; if (typeof clue.answer !== 'number') clue.answer = 0; }
@@ -158,9 +165,16 @@
           }
         });
         if (el.dataset.je.startsWith('type:')) renderJeopardyEditor();  // swap answer inputs
+        if (el.dataset.je.startsWith('dd:')) updateDdCount();
       };
       if (el.tagName === 'SELECT') el.oninput = null;   // avoid double-fire on selects
     });
+  }
+
+  function updateDdCount() {
+    const n = J().categories.reduce((t, c) => t + c.clues.filter((x) => x.dd).length, 0);
+    const el = $('jeDdCount');
+    if (el) el.textContent = `◆ Daily doubles: ${n}/5`;
   }
 
   function jeCatCard(c, ci) {
@@ -188,6 +202,7 @@
         <input type="number" data-je="val:${ci}:${ri}" value="${clue.value}" title="Value" />
         ${typeSel}
         <input type="text" data-je="q:${ci}:${ri}" value="${escAttr(clue.q)}" placeholder="Clue / question…" />
+        <label class="je-dd" title="Daily Double (max 5)"><input type="checkbox" data-je="dd:${ci}:${ri}" ${clue.dd ? 'checked' : ''} /> ◆ DD</label>
         ${ans}
       </div>`;
     }).join('');
@@ -209,7 +224,7 @@
       while (Jq.categories.length < cats) Jq.categories.push({ name: 'Category ' + (Jq.categories.length + 1), clues: [] });
       Jq.categories.length = cats;
       Jq.categories.forEach((c) => {
-        while (c.clues.length < per) c.clues.push({ q: '', type: 'mc', choices: ['', '', '', ''], answer: 0, value: (c.clues.length + 1) * 100 });
+        while (c.clues.length < per) c.clues.push({ q: '', type: 'mc', choices: ['', '', '', ''], answer: 0, value: (c.clues.length + 1) * 100, dd: false });
         c.clues.length = per;
       });
       // board layout changed — clear used/active so stale keys can't linger

@@ -383,7 +383,7 @@
         const k = c + ':' + r;
         const used = s.jeop.used[k];
         const live = s.jeop.active && s.jeop.active.c === c && s.jeop.active.r === r;
-        html += `<button class="${used ? 'used' : ''} ${live ? 'live' : ''}" data-jp="${k}">${clue.value}</button>`;
+        html += `<button class="${used ? 'used' : ''} ${live ? 'live' : ''}" data-jp="${k}">${clue.dd ? '◆ ' : ''}${clue.value}</button>`;
       }
     }
     g.innerHTML = html || '<p class="hint">No Jeopardy categories yet — add some in the Editor.</p>';
@@ -412,10 +412,18 @@
     if (!act || !clue) { panel.classList.add('hidden'); return; }
     panel.classList.remove('hidden');
     const typeLabel = { mc: 'Multiple choice', tf: 'True / False', text: 'Type-in' }[clue.type] || clue.type;
-    $('jpCat').textContent = cat.name + ' · ' + clue.value + ' · ' + typeLabel;
+    $('jpCat').textContent = cat.name + ' · ' + clue.value + ' · ' + typeLabel + (clue.dd ? ' · ◆ DAILY DOUBLE' : '');
     $('jpQ').textContent = clue.q;
     $('jpA').textContent = '✔ ' + jpAnswerText(clue);
-    $('jpVal').textContent = (s.jeop.awardSign < 0 ? '−' : '+') + clue.value;
+    // Daily Double: award/deduct uses the wager instead of the tile value.
+    $('jpWagerWrap').style.display = clue.dd ? '' : 'none';
+    const clueKey = act.c + ':' + act.r;
+    if (clue.dd && $('jpWager').dataset.clue !== clueKey) {
+      $('jpWager').value = clue.value;
+      $('jpWager').dataset.clue = clueKey;
+    }
+    const stake = clue.dd ? (+$('jpWager').value || clue.value) : clue.value;
+    $('jpVal').textContent = (s.jeop.awardSign < 0 ? '−' : '+') + stake;
     $('jpSignPlus').classList.toggle('on', s.jeop.awardSign >= 0);
     $('jpSignMinus').classList.toggle('on', s.jeop.awardSign < 0);
     $('jpReveal').disabled = !!act.showAnswer;
@@ -427,7 +435,8 @@
   function jpAwardTeam(i) {
     const s = S(); const act = s.jeop.active; if (!act) return;
     const cat = jpData().categories[act.c]; const clue = cat && cat.clues[act.r]; if (!clue) return;
-    const delta = (s.jeop.awardSign < 0 ? -1 : 1) * (+clue.value || 0);
+    const stake = clue.dd ? (+$('jpWager').value || +clue.value || 0) : (+clue.value || 0);
+    const delta = (s.jeop.awardSign < 0 ? -1 : 1) * stake;
     Store.patch((st) => { st.teams[i].score = Math.max(0, st.teams[i].score + delta); });
     if (delta >= 0) Sound.reveal(); else Sound.strike();
     toast((delta >= 0 ? '+' : '') + delta + ' → ' + s.teams[i].name);
@@ -442,6 +451,11 @@
     Sound.click(); renderJpGrid();
   };
   $('jpBack').onclick = () => { Store.patch((s) => { s.jeop.active = null; }); renderJpGrid(); };
+  $('jpWager').oninput = () => updateJpCluePanel();
+  $('jpCountdown').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'jeopardy'; s.jeop.active = null; s.jeop.countdownId = (s.jeop.countdownId || 0) + 1; });
+    toast('🎬 Jeopardy countdown rolling!');
+  };
   $('jpResetBoard').onclick = () => {
     if (!confirm('Reset the Jeopardy board? All tiles come back (team scores are kept).')) return;
     Store.patch((s) => { s.jeop.used = {}; s.jeop.active = null; });

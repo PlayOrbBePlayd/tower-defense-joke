@@ -135,9 +135,10 @@
         <div class="panel hidden" id="jeopPanel">
           <h2>🟦 Jeopardy — Opener Round</h2>
           <div class="jpc-top">
-            <span class="hint" style="margin:0">Tap a tile to put the clue on the board. Questions, categories and board size live in the
+            <span class="hint" style="margin:0">Tap a tile to put the clue on the board. Questions, categories, board size and ◆ daily doubles live in the
               <a href="editor.html" target="_blank" style="color:var(--c-accent)">Editor → Jeopardy</a>.</span>
-            <button class="btn ghost sm" id="jpResetBoard">↺ Reset board (all tiles back)</button>
+            <button class="btn red sm" id="jpCountdown">🎬 Play Countdown → Board</button>
+            <button class="btn ghost sm" id="jpResetBoard">↺ Reset board</button>
           </div>
           <div class="jpc-grid" id="jpGrid"></div>
 
@@ -155,6 +156,7 @@
                 <button class="btn red sm" id="jpSignMinus">－ Deduct</button>
               </span>
               <span class="jpc-val">Value: <b id="jpVal">0</b></span>
+              <span class="jpc-val" id="jpWagerWrap" style="display:none">◆ Wager: <input type="number" id="jpWager" min="0" style="width:96px" /></span>
               <span class="ea-spacer" style="flex:1"></span>
               <button class="btn blue sm" id="jpBack">← Board (keep tile)</button>
               <button class="btn gold sm" id="jpDone">✓ Done (mark used)</button>
