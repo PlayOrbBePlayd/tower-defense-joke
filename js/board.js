@@ -145,13 +145,13 @@
       const last = parts.pop();
       const first = parts.join(' ');
       stage.innerHTML = `
-        <div class="logo-screen">
-          <div class="brand-logo" data-brand-logo></div>
-          <div class="big-title">${escapeHtml(first)} <span class="accent">${escapeHtml(last)}</span></div>
-          <div class="sub" data-brand-subtitle>${escapeHtml(s.theme.subtitle || '')}</div>
+        <div class="jp-cd ff-cd">
+          <div class="intro-rays"></div>
+          <div class="jp-cd-title now">${escapeHtml(first)} <span>${escapeHtml(last)}</span></div>
+          <div class="jp-cd-sub now">${escapeHtml(s.theme.subtitle || 'SURVEY SAYS…')}</div>
           <div class="marquee">${'<span class="bulb"></span>'.repeat(9)}</div>
         </div>`;
-      if (prev.boardMode === 'feud-title' || prev.boardMode) { /* no sound spam on load */ }
+      if (prev.boardMode && prev.boardMode !== 'feud-title') Sound.ding();
       prev.boardMode = 'feud-title';
       prev.ftKey = key;
     }
