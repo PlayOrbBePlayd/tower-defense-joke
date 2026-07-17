@@ -506,7 +506,8 @@
         </div>
         ${clue.dd ? '<div class="jp-dd-badge">◆ DAILY DOUBLE</div>' : ''}
         <div class="jp-cat">${escapeHtml(cat.name)} · <b>${clue.value}</b></div>
-        <div class="jp-q">${escapeHtml(clue.q)}</div>
+        <div class="jp-q ${clue.img ? 'has-img' : ''}">${escapeHtml(clue.q)}</div>
+        ${clue.img ? `<img class="jp-img" src="${clue.img}" alt="" />` : ''}
         ${body}
       </div>`;
   }
