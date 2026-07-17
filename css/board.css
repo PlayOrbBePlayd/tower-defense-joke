@@ -457,12 +457,15 @@
 .jp-cd .intro-rays { will-change: transform; }
 .jp-cd-title { font-family: var(--font-display); font-size: clamp(50px, 10vw, 170px); line-height: .95;
   color: #fff; text-shadow: 0 6px 0 var(--c-primary-dk), 0 10px 26px rgba(0,0,0,.6);
-  opacity: 0; animation: slamBounce .8s cubic-bezier(.2,1.1,.35,1) 3.05s forwards;
+  opacity: 0; animation: slamBounce .8s cubic-bezier(.2,1.1,.35,1) 3.05s forwards, titleThrob 1.3s ease-in-out 4.2s infinite;
   will-change: transform, opacity; position: relative; z-index: 2; }
 .jp-cd-title span { color: var(--c-accent); text-shadow: 0 6px 0 var(--c-accent-dk), 0 0 34px var(--c-primary-glow); }
 .jp-cd-sub { font-family: var(--font-cond); font-weight: 700; letter-spacing: .4em; text-transform: uppercase;
   color: #9fb0e6; font-size: clamp(13px, 1.9vw, 28px); opacity: 0; position: relative; z-index: 2;
-  animation: popIn .5s cubic-bezier(.2,1.6,.4,1) 3.55s forwards; will-change: transform, opacity; }
+  animation: popIn .5s cubic-bezier(.2,1.6,.4,1) 3.55s forwards, bulb 1.4s ease-in-out 4.4s infinite; will-change: transform, opacity; }
+/* Title shown without a countdown: slam immediately */
+.jp-cd-title.now { animation: slamBounce .7s cubic-bezier(.2,1.1,.35,1) .05s forwards, titleThrob 1.3s ease-in-out 1.1s infinite; }
+.jp-cd-sub.now { animation: popIn .5s cubic-bezier(.2,1.6,.4,1) .55s forwards, bulb 1.4s ease-in-out 1.4s infinite; }
 
 /* Daily Double splash + badge */
 .jp-dd { position: fixed; inset: 0; z-index: 80; overflow: hidden;
