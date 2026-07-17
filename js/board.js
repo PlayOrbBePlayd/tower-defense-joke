@@ -94,7 +94,8 @@
     pod0.style.visibility = isJp ? 'hidden' : '';
     pod1.style.visibility = isJp ? 'hidden' : '';
     const plate = document.querySelector('.board-brand .plate-title');
-    if (plate) plate.textContent = isJp ? 'TBROI JEOPARDY!' : (s.theme.title || 'FAMILY FEUD');
+    if (plate) plate.textContent = isJp ? 'TBROI JEOPARDY!'
+      : (s.boardMode === 'logo' ? '' : (s.theme.title || 'FAMILY FEUD'));
   }
 
   function handleFx(fx) {
@@ -300,60 +301,6 @@
     const act = s.jeop.active;
 
     if (performance.now() < jpCdUntil) return;   // sweep still playing
-
-    // Category intro sweep — each category slams across the screen in turn.
-    if (s.jeop.sweepId && s.jeop.sweepId !== prev.jpSwId) {
-      prev.jpSwId = s.jeop.sweepId;
-      const cats = J.categories;
-      const total = cats.length * 1400 + 900;
-      jpCdUntil = performance.now() + total;
-      const slides = cats.map((c, i) =>
-        `<div class="jp-sw-cat" style="animation-delay:${(i * 1.4).toFixed(1)}s">${escapeHtml(c.name)}</div>`).join('');
-      stage.innerHTML = `
-        <div class="jp-sw">
-          <div class="intro-rays"></div>
-          <div class="jp-sw-kicker">TODAY'S CATEGORIES</div>
-          <div class="jp-sw-stage">${slides}</div>
-        </div>`;
-      prev.boardMode = 'jeopardy'; prev.jeopKey = 'sweep';
-      const cue = (ms, fn) => setTimeout(() => { if (Store.get().boardMode === 'jeopardy') fn(); }, ms);
-      cats.forEach((c, i) => cue(i * 1400 + 150, () => Sound.flip()));
-      cue(total - 700, () => Sound.fanfare());
-      setTimeout(() => {
-        jpCdUntil = 0; jpForceCascade = true;
-        if (Store.get().boardMode === 'jeopardy') { prev.jeopKey = 'after-cd'; render(); }
-      }, total);
-      Theme.apply();
-      return;
-    }
-
-    // Final Jeopardy stages: category+wagers → clue → answer.
-    const fin = s.jeop.final;
-    if (fin && fin.stage) {
-      const F = J.final || {};
-      const key = 'final|' + fin.stage + '|' + (F.q || '') + '|' + (F.category || '');
-      if (prev.boardMode !== 'jeopardy' || prev.jeopKey !== key) {
-        const wasFinal = String(prev.jeopKey || '').startsWith('final|');
-        if (fin.stage === 'category') {
-          stage.innerHTML = `
-            <div class="jp-final">
-              <div class="intro-rays"></div>
-              <div class="jf-kicker">FINAL JEOPARDY</div>
-              <div class="jf-cat">${escapeHtml(F.category || '???')}</div>
-              <div class="jf-sub">LOCK IN YOUR WAGERS…</div>
-            </div>`;
-          if (prev.boardMode === 'jeopardy') Sound.fanfare();
-        } else {
-          const fakeJ = { categories: [{ name: 'FINAL · ' + (F.category || 'JEOPARDY'), clues: [Object.assign({ value: '★' }, F, { dd: false })] }] };
-          stage.innerHTML = jeopClueHtml(s, fakeJ, { c: 0, r: 0, showAnswer: fin.stage === 'answer' });
-          if (wasFinal) { if (fin.stage === 'answer') Sound.ding(); else Sound.flip(); }
-        }
-        prev.boardMode = 'jeopardy'; prev.jeopKey = key;
-      }
-      updateJpTimer(s);
-      Theme.apply();
-      return;
-    }
 
     // Category intro sweep — each category slams across the screen in turn.
     if (s.jeop.sweepId && s.jeop.sweepId !== prev.jpSwId) {
