@@ -16,7 +16,7 @@
   function render() {
     // Live question counts on the tabs
     const q = S().questions;
-    $('tabs').querySelector('[data-t="main"]').textContent = `Main Game (${q.main.length})`;
+    $('tabs').querySelector('[data-t="main"]').textContent = `Family Feud (${q.main.length})`;
     $('tabs').querySelector('[data-t="fast"]').textContent = `Speed Round (${q.fast.length})`;
     const J = q.jeopardy || { categories: [] };
     const per = J.categories.length ? Math.max(...J.categories.map((c) => c.clues.length)) : 0;
