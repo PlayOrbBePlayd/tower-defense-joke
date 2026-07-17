@@ -21,10 +21,12 @@
   });
   function switchPanel(mode) {
     $('modeTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
-    const isFast = mode === 'fast', isEvent = mode === 'event';
-    $('mainPanel').classList.toggle('hidden', isFast || isEvent);
+    const isFast = mode === 'fast', isEvent = mode === 'event', isJeop = mode === 'jeopardy';
+    $('mainPanel').classList.toggle('hidden', isFast || isEvent || isJeop);
     $('fastPanel').classList.toggle('hidden', !isFast);
     $('eventPanel').classList.toggle('hidden', !isEvent);
+    $('jeopPanel').classList.toggle('hidden', !isJeop);
+    if (isJeop) renderJpGrid();
     // Event tab drives the board to the leaderboard. "Main Game" in event mode
     // opens on the round's MATCHUP screen until play/pass has decided control —
     // never spoiling the question or the board. After the face-off it goes
@@ -364,6 +366,88 @@
     toast('↺ Fast Money reset — fresh round');
   };
 
+  /* ---------------- JEOPARDY (opener round) ---------------- */
+  function jpData() { return S().questions.jeopardy || { categories: [] }; }
+
+  function renderJpGrid() {
+    const J = jpData(); const s = S();
+    const g = $('jpGrid');
+    const cols = Math.max(1, J.categories.length);
+    g.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    const rows = J.categories.length ? Math.max(...J.categories.map((c) => c.clues.length)) : 0;
+    let html = J.categories.map((c) => `<div class="h" title="${escAttr(c.name)}">${escHtml(c.name)}</div>`).join('');
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const clue = J.categories[c] && J.categories[c].clues[r];
+        if (!clue) { html += '<span></span>'; continue; }
+        const k = c + ':' + r;
+        const used = s.jeop.used[k];
+        const live = s.jeop.active && s.jeop.active.c === c && s.jeop.active.r === r;
+        html += `<button class="${used ? 'used' : ''} ${live ? 'live' : ''}" data-jp="${k}">${clue.value}</button>`;
+      }
+    }
+    g.innerHTML = html || '<p class="hint">No Jeopardy categories yet — add some in the Editor.</p>';
+    g.querySelectorAll('button[data-jp]').forEach((b) => { b.onclick = () => openJpClue(b.dataset.jp); });
+    updateJpCluePanel();
+  }
+
+  function openJpClue(k) {
+    const [c, r] = k.split(':').map(Number);
+    Store.patch((s) => { s.jeop.active = { c, r, showAnswer: false }; s.boardMode = 'jeopardy'; });
+    Sound.flip();
+    renderJpGrid();
+  }
+
+  function jpAnswerText(clue) {
+    if (clue.type === 'mc') return 'ABCD'[+clue.answer] + ' — ' + ((clue.choices || [])[+clue.answer] || '');
+    if (clue.type === 'tf') return clue.answer ? 'TRUE' : 'FALSE';
+    return String(clue.answer || '');
+  }
+
+  function updateJpCluePanel() {
+    const s = S(); const act = s.jeop.active; const panel = $('jpClueCtl');
+    const J = jpData();
+    const cat = act && J.categories[act.c];
+    const clue = cat && cat.clues[act.r];
+    if (!act || !clue) { panel.classList.add('hidden'); return; }
+    panel.classList.remove('hidden');
+    const typeLabel = { mc: 'Multiple choice', tf: 'True / False', text: 'Type-in' }[clue.type] || clue.type;
+    $('jpCat').textContent = cat.name + ' · ' + clue.value + ' · ' + typeLabel;
+    $('jpQ').textContent = clue.q;
+    $('jpA').textContent = '✔ ' + jpAnswerText(clue);
+    $('jpVal').textContent = (s.jeop.awardSign < 0 ? '−' : '+') + clue.value;
+    $('jpSignPlus').classList.toggle('on', s.jeop.awardSign >= 0);
+    $('jpSignMinus').classList.toggle('on', s.jeop.awardSign < 0);
+    $('jpReveal').disabled = !!act.showAnswer;
+    $('jpAward').innerHTML = s.teams.map((t, i) =>
+      `<button class="ea-team" data-i="${i}"><span class="nm">${escHtml(t.name)}</span><span class="s">${t.score}</span></button>`).join('');
+    $('jpAward').querySelectorAll('.ea-team').forEach((b) => { b.onclick = () => jpAwardTeam(+b.dataset.i); });
+  }
+
+  function jpAwardTeam(i) {
+    const s = S(); const act = s.jeop.active; if (!act) return;
+    const cat = jpData().categories[act.c]; const clue = cat && cat.clues[act.r]; if (!clue) return;
+    const delta = (s.jeop.awardSign < 0 ? -1 : 1) * (+clue.value || 0);
+    Store.patch((st) => { st.teams[i].score = Math.max(0, st.teams[i].score + delta); });
+    if (delta >= 0) Sound.reveal(); else Sound.strike();
+    toast((delta >= 0 ? '+' : '') + delta + ' → ' + s.teams[i].name);
+    updateJpCluePanel();
+  }
+
+  $('jpReveal').onclick = () => { Store.patch((s) => { if (s.jeop.active) s.jeop.active.showAnswer = true; }); updateJpCluePanel(); };
+  $('jpSignPlus').onclick = () => { Store.patch((s) => { s.jeop.awardSign = 1; }); updateJpCluePanel(); };
+  $('jpSignMinus').onclick = () => { Store.patch((s) => { s.jeop.awardSign = -1; }); updateJpCluePanel(); };
+  $('jpDone').onclick = () => {
+    Store.patch((s) => { const a = s.jeop.active; if (a) s.jeop.used[a.c + ':' + a.r] = true; s.jeop.active = null; });
+    Sound.click(); renderJpGrid();
+  };
+  $('jpBack').onclick = () => { Store.patch((s) => { s.jeop.active = null; }); renderJpGrid(); };
+  $('jpResetBoard').onclick = () => {
+    if (!confirm('Reset the Jeopardy board? All tiles come back (team scores are kept).')) return;
+    Store.patch((s) => { s.jeop.used = {}; s.jeop.active = null; });
+    renderJpGrid(); toast('Jeopardy board reset');
+  };
+
   /* ---------------- FACE-OFF flow (matchup → question → play/pass) ---------------- */
   // The two teams facing off this round (from event.matchups, safe fallbacks).
   function foTeams() {
@@ -521,14 +605,16 @@
       : (s.boardMode === 'matchup' || s.boardMode === 'question') ? 'main'
       : s.boardMode;
     $('modeTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.mode === tab));
-    $('mainPanel').classList.toggle('hidden', s.boardMode === 'fast' || s.boardMode === 'leaderboard');
+    $('mainPanel').classList.toggle('hidden', s.boardMode === 'fast' || s.boardMode === 'leaderboard' || s.boardMode === 'jeopardy');
     $('fastPanel').classList.toggle('hidden', s.boardMode !== 'fast');
     $('eventPanel').classList.toggle('hidden', s.boardMode !== 'leaderboard');
+    $('jeopPanel').classList.toggle('hidden', s.boardMode !== 'jeopardy');
   }
 
   Store.subscribe(() => {
     renderMain(); renderStrikeDots(); $('fmTotal').textContent = fastTotal(); updateEventUI();
     updateIntroBtn();
+    if (!$('jeopPanel').classList.contains('hidden')) renderJpGrid();
     const cn = $('ctlClientName');
     if (cn && document.activeElement !== cn) cn.value = S().clientName || '';
   });
