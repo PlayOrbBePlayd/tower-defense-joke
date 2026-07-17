@@ -83,6 +83,7 @@
       timerLabel: '',
       showTotals: false,
       revealAll: false,
+      countdownId: 0,          // bump to play the Fast Money countdown on the board
     },
 
     // ---- Jeopardy opener round ----

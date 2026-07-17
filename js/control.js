@@ -37,6 +37,11 @@
       let bm = isEvent ? 'leaderboard' : mode;
       if (mode === 'main' && (!s.event.faceoff || s.event.faceoff.control == null)) bm = 'feud-title';
       if (mode === 'jeopardy' && !s.jeop.active && !(s.jeop.final && s.jeop.final.stage)) bm = 'jeopardy-title';
+      if (mode === 'fast') {
+        const live = s.fast.p1.some((a) => a.revealed) || s.fast.p2.some((a) => a.revealed)
+          || s.fast.showTotals || s.fast.timerRunning;
+        if (!live) bm = 'fast-title';
+      }
       s.boardMode = bm;
     });
     if (isEvent) buildRoster();
@@ -232,6 +237,21 @@
   };
 
   /* ---------------- FAST MONEY ---------------- */
+  // Title page / countdown / board — same show-open flow as Jeopardy. The
+  // countdown slams the title and HOLDS until the host shows the board.
+  $('fmTitleBtn').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'fast-title'; });
+    toast('🏷 Fast Money title page up');
+  };
+  $('fmCountdown').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'fast-title'; s.fast.countdownId = (s.fast.countdownId || 0) + 1; });
+    toast('🎬 3-2-1… holds on the title until you press Show Fast Money');
+  };
+  $('fmShowBoard').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'fast'; });
+    toast('▶ Fast Money board up!');
+  };
+
   let fmPlayer = 1;
   $('fmP1').onclick = () => setFmPlayer(1);
   $('fmP2').onclick = () => setFmPlayer(2);
@@ -723,13 +743,15 @@
   function syncTabs() {
     const s = S();
     const isJp = s.boardMode === 'jeopardy' || s.boardMode === 'jeopardy-title';
+    const isFm = s.boardMode === 'fast' || s.boardMode === 'fast-title';
     const tab = s.boardMode === 'leaderboard' ? 'event'
       : (s.boardMode === 'matchup' || s.boardMode === 'question' || s.boardMode === 'feud-title') ? 'main'
       : isJp ? 'jeopardy'
+      : isFm ? 'fast'
       : s.boardMode;
     $('modeTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.mode === tab));
-    $('mainPanel').classList.toggle('hidden', s.boardMode === 'fast' || s.boardMode === 'leaderboard' || isJp);
-    $('fastPanel').classList.toggle('hidden', s.boardMode !== 'fast');
+    $('mainPanel').classList.toggle('hidden', isFm || s.boardMode === 'leaderboard' || isJp);
+    $('fastPanel').classList.toggle('hidden', !isFm);
     $('eventPanel').classList.toggle('hidden', s.boardMode !== 'leaderboard');
     $('jeopPanel').classList.toggle('hidden', !isJp);
   }

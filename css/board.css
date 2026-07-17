@@ -467,6 +467,16 @@
 .jp-cd-title.now { animation: slamBounce .7s cubic-bezier(.2,1.1,.35,1) .05s forwards, titleThrob 1.3s ease-in-out 1.1s infinite; }
 .jp-cd-sub.now { animation: popIn .5s cubic-bezier(.2,1.6,.4,1) .55s forwards, bulb 1.4s ease-in-out 1.4s infinite; }
 
+/* Fast Money title / 3-2-1 countdown — same rig, warmer money-gold cast */
+.fm-cd { background: radial-gradient(1300px 900px at 50% 32%, #274f9b -30%, #081029 78%); }
+.fm-cd-kicker { font-family: var(--font-cond); font-weight: 700; letter-spacing: .34em; text-transform: uppercase;
+  color: var(--c-accent); font-size: clamp(18px, 3vw, 44px);
+  text-shadow: 0 0 26px var(--c-primary-glow), 0 2px 0 var(--c-accent-dk);
+  opacity: 0; position: relative; z-index: 2;
+  animation: popIn .5s cubic-bezier(.2,1.6,.4,1) 3.3s forwards, bulb 1.5s ease-in-out 4.3s infinite;
+  will-change: transform, opacity; }
+.fm-cd-kicker.now { animation: popIn .5s cubic-bezier(.2,1.6,.4,1) .3s forwards, bulb 1.5s ease-in-out 1.2s infinite; }
+
 /* Daily Double splash + badge */
 .jp-dd { position: fixed; inset: 0; z-index: 80; overflow: hidden;
   display: grid; place-items: center;
