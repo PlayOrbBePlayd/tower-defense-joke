@@ -477,6 +477,11 @@
   will-change: transform, opacity; }
 .fm-cd-kicker.now { animation: popIn .5s cubic-bezier(.2,1.6,.4,1) .3s forwards, bulb 1.5s ease-in-out 1.2s infinite; }
 
+/* Feud board entrance — banner slams, frame pops, slats cascade in */
+.q-banner.slam-in { animation: slamBounce .6s cubic-bezier(.2,1.1,.35,1) both; will-change: transform, opacity; }
+.board-frame.slam-in { animation: popIn .5s cubic-bezier(.2,1.4,.4,1) .15s both; will-change: transform, opacity; }
+.slat.cascade { animation: jpPop .45s cubic-bezier(.2,1.4,.4,1) backwards; will-change: transform, opacity; }
+
 /* Family Feud title page — same slam-and-throb rig, brand-blue cast + bulbs */
 .ff-cd { background: radial-gradient(1300px 900px at 50% 32%, var(--c-primary-a30), var(--c-deep) 78%); }
 .jp-cd .marquee { display: flex; gap: 14px; position: relative; z-index: 2;
