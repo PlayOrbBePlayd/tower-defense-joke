@@ -592,7 +592,7 @@
     Theme.apply();
   }
 
-  /* ---------------- MAIN GAME ---------------- */
+  /* ---------------- FAMILY FEUD ---------------- */
   function renderMain(s) {
     const q = s.questions.main[s.main.questionIndex];
     if (!q) { renderLogo(s); return; }

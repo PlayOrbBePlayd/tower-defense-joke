@@ -28,7 +28,7 @@
     $('jeopPanel').classList.toggle('hidden', !isJeop);
     if (isJeop) renderJpGrid();
     // Players never see a game board just from clicking into a game:
-    // - "Main Game" opens on the FEUD TITLE page until play/pass has decided
+    // - "Family Feud" opens on the FEUD TITLE page until play/pass has decided
     //   control (mid-round it returns to the live board).
     // - "Jeopardy" opens on the JEOPARDY TITLE page unless a clue or Final
     //   Jeopardy is already live.
@@ -72,6 +72,7 @@
   };
 
   $('toLogo').onclick = () => { Store.patch((s) => { s.boardMode = 'logo'; }); syncTabs(); };
+  $('toJeopardy').onclick = () => switchPanel('jeopardy');
   $('toMain').onclick = () => { Store.patch((s) => { s.boardMode = 'main'; }); switchPanel('main'); };
   $('toFast').onclick = () => { Store.patch((s) => { s.boardMode = 'fast'; }); switchPanel('fast'); };
   $('celebrate').onclick = () => { Store.fx('confetti'); toast('🎊 Celebration!'); };
@@ -96,7 +97,7 @@
     Sound.setEnabled(on);
   };
 
-  /* ---------------- MAIN GAME ---------------- */
+  /* ---------------- FAMILY FEUD ---------------- */
   function renderTeams() {
     const s = S();
     const row = $('teamsRow');

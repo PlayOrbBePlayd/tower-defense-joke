@@ -58,7 +58,7 @@
       faceoff: { buzzed: null, control: null },   // team indices
     },
 
-    // ---- Main game round ----
+    // ---- Family Feud round ----
     main: {
       questionIndex: 0,
       revealed: [],            // bool[] per answer
