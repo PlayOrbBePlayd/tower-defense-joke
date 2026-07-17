@@ -84,6 +84,38 @@
   $('fxSmoke').onclick = () => { Store.fx('smoke'); toast('💨 Smoke machine!'); };
   $('fxLasers').onclick = () => { Store.fx('lasers'); toast('⚡ Laser show!'); };
   $('fxUfo').onclick = () => { Store.fx('ufo'); toast('🛸 UFO inbound!'); };
+  // Save / load the ENTIRE game (questions, images, branding, teams,
+  // scores, round progress) as a portable .json file — email or USB it
+  // to another laptop and Load it there to pick up exactly where you left off.
+  $('saveGame').onclick = () => {
+    const s = S();
+    const stamp = new Date().toISOString().slice(0, 10);
+    const client = (s.clientName || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'game';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(s)], { type: 'application/json' }));
+    a.download = `game-show-roundup-${client}-${stamp}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    toast('💾 Saved! Send the file to any laptop and use Load Game there');
+  };
+  $('loadGame').onclick = () => $('loadGameFile').click();
+  $('loadGameFile').onchange = (e) => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      let obj;
+      try { obj = JSON.parse(r.result); } catch (_) { obj = null; }
+      if (!obj || typeof obj !== 'object' || !obj.questions || !obj.teams) {
+        alert('That file is not a valid saved game.'); return;
+      }
+      if (!confirm('Load this saved game?\n\nIt REPLACES everything currently on this laptop — questions, branding, teams, scores and round progress.')) return;
+      localStorage.setItem(Store.LS_KEY, JSON.stringify(obj));
+      location.reload();
+    };
+    r.readAsText(f);
+  };
+
   // Factory reset — wipes EVERYTHING back to defaults (scores, teams,
   // matchups, questions, branding, client name) for a brand-new game.
   // Password-protected so it can't be hit by accident mid-event.

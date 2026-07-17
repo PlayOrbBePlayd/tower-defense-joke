@@ -187,12 +187,96 @@
       };
       if (el.tagName === 'SELECT') el.oninput = null;   // avoid double-fire on selects
     });
+    bindImgButtons();
   }
 
   function updateDdCount() {
     const n = J().categories.reduce((t, c) => t + c.clues.filter((x) => x.dd).length, 0);
     const el = $('jeDdCount');
     if (el) el.textContent = `◆ Daily doubles: ${n}/5`;
+  }
+
+  /* ---- Optional per-clue images ---- */
+  // Everything lives in browser storage (~5MB total), so uploads are
+  // downscaled to ~1100px JPEG before saving. 'f' targets Final Jeopardy.
+  function jeImgControls(clue, target) {
+    return `<span class="je-imgwrap">
+      ${clue.img ? `<img class="je-thumb" src="${clue.img}" alt="" />` : ''}
+      <button type="button" class="btn ghost sm" data-jeimg="${target}" title="${clue.img ? 'Replace the image' : 'Add an image to this clue (optional)'}">🖼${clue.img ? ' ✎' : ' ＋'}</button>
+      ${clue.img ? `<button type="button" class="btn ghost sm" data-jeimgx="${target}" title="Remove image">✕</button>` : ''}
+    </span>`;
+  }
+
+  let imgTarget = null;
+  const imgInput = document.createElement('input');
+  imgInput.type = 'file'; imgInput.accept = 'image/*'; imgInput.style.display = 'none';
+  document.body.appendChild(imgInput);
+  imgInput.onchange = () => {
+    const f = imgInput.files[0]; imgInput.value = '';
+    if (f && imgTarget) loadClueImage(f, imgTarget);
+  };
+
+  function bindImgButtons() {
+    $('list').querySelectorAll('[data-jeimg]').forEach((b) => {
+      b.onclick = () => { imgTarget = b.dataset.jeimg; imgInput.click(); };
+    });
+    $('list').querySelectorAll('[data-jeimgx]').forEach((b) => {
+      b.onclick = () => {
+        const t = b.dataset.jeimgx;
+        Store.patch((s) => {
+          if (t === 'f') { if (s.questions.jeopardy.final) delete s.questions.jeopardy.final.img; }
+          else {
+            const [c, r] = t.split(':').map(Number);
+            const cl = s.questions.jeopardy.categories[c] && s.questions.jeopardy.categories[c].clues[r];
+            if (cl) delete cl.img;
+          }
+        });
+        renderJeopardyEditor();
+        toast('Image removed');
+      };
+    });
+  }
+
+  function loadClueImage(file, target) {
+    if (file.size > 8_000_000) { alert('Please use an image under 8MB.'); return; }
+    const r = new FileReader();
+    r.onload = () => {
+      const im = new Image();
+      im.onload = () => {
+        // Downscale to a projector-friendly size and compress.
+        const MAX = 1100;
+        const scale = Math.min(1, MAX / Math.max(im.width, im.height));
+        const cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(im.width * scale));
+        cv.height = Math.max(1, Math.round(im.height * scale));
+        const cx = cv.getContext('2d');
+        cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height);
+        cx.drawImage(im, 0, 0, cv.width, cv.height);
+        let url = cv.toDataURL('image/jpeg', 0.8);
+        if (url.length > 500_000) url = cv.toDataURL('image/jpeg', 0.6);
+        // Browser storage holds the whole game (~5MB) — refuse before it breaks.
+        if (JSON.stringify(Store.get()).length + url.length > 4_300_000) {
+          alert('Not enough room for this image — storage is nearly full. Remove some other clue images or use a smaller one.');
+          return;
+        }
+        Store.patch((s) => {
+          if (target === 'f') {
+            s.questions.jeopardy.final = s.questions.jeopardy.final
+              || { category: '', q: '', type: 'mc', choices: ['', '', '', ''], answer: 0 };
+            s.questions.jeopardy.final.img = url;
+          } else {
+            const [c, ri] = target.split(':').map(Number);
+            const cl = s.questions.jeopardy.categories[c] && s.questions.jeopardy.categories[c].clues[ri];
+            if (cl) cl.img = url;
+          }
+        });
+        renderJeopardyEditor();
+        toast('🖼 Image added — it shows with the clue on the board');
+      };
+      im.onerror = () => alert('Could not read that image file.');
+      im.src = r.result;
+    };
+    r.readAsDataURL(file);
   }
 
   function jeFinalCard() {
@@ -221,9 +305,10 @@
         <span class="qnum">🏆</span>
         <input type="text" class="qtext" data-je="fcat:0:0" value="${escAttr(F.category || '')}" placeholder="Final Jeopardy category…" />
       </div>
-      <div class="je-clue" style="grid-template-columns:170px 1fr">
+      <div class="je-clue" style="grid-template-columns:170px 1fr auto">
         ${typeSel}
         <input type="text" data-je="fq:0:0" value="${escAttr(F.q || '')}" placeholder="The Final Jeopardy clue…" />
+        ${jeImgControls(F, 'f')}
         ${ans}
       </div>
       <div class="sum">Teams lock in secret wagers before this clue is shown. Run it from Host Control → Jeopardy → 🏆 Final Jeopardy.</div>
@@ -256,6 +341,7 @@
         ${typeSel}
         <input type="text" data-je="q:${ci}:${ri}" value="${escAttr(clue.q)}" placeholder="Clue / question…" />
         <label class="je-dd" title="Daily Double (max 5)"><input type="checkbox" data-je="dd:${ci}:${ri}" ${clue.dd ? 'checked' : ''} /> ◆ DD</label>
+        ${jeImgControls(clue, ci + ':' + ri)}
         ${ans}
       </div>`;
     }).join('');
