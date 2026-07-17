@@ -11,6 +11,14 @@ window.FF_DEFAULT_QUESTIONS = {
    *   type 'text' -> answer: string (host judges typed/spoken responses)
    * Categories and clues-per-category are fully editable in the Editor. */
   jeopardy: {
+    // Final Jeopardy: one dramatic clue — teams lock in secret wagers first.
+    final: {
+      category: 'Everyday Mysteries',
+      q: 'Surveys say this is the #1 thing people would grab first in a house fire — after people and pets.',
+      type: 'mc',
+      choices: ['Their phone', 'Photo albums', 'Their wallet', 'Their laptop'],
+      answer: 0,
+    },
     categories: [
       {
         name: 'Office Life',

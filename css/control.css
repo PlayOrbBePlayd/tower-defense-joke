@@ -142,6 +142,15 @@
 .ev-mu .v { font-family:var(--font-cond); font-weight:700; color:#9fb0e6; font-size:13px; text-align:center; }
 .ev-mu select { padding:6px 8px; font-size:13px; }
 
+/* Final Jeopardy wager rows */
+.jf-row { display:grid; grid-template-columns: 1fr 110px auto auto auto; gap:8px; align-items:center;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:9px;
+  padding:6px 10px; margin-bottom:6px; }
+.jf-row .nm { font-family:var(--font-cond); font-weight:700; font-size:15px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.jf-row .nm b { color:var(--c-accent); font-family:var(--font-display); margin-left:6px; }
+.jf-row .res { font-weight:800; font-size:13px; min-width:64px; text-align:center; }
+.jf-row .res.win { color:#3ce88a; } .jf-row .res.loss { color:#ff5b5b; }
+
 /* Event award bar in Main panel */
 .event-award { margin-top:14px; border-top:2px solid var(--c-accent); padding-top:12px; }
 .ea-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }

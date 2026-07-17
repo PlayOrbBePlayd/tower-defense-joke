@@ -130,7 +130,7 @@
           <input type="number" id="jePer" min="1" max="8" value="${per || 5}" />
           <span class="sum">Answer formats per clue: multiple choice (default), true/false, or type-in. Values default to row × 100.</span> <span class="sum" id="jeDdCount"></span>
         </div>
-      </div>` + cats.map((c, ci) => jeCatCard(c, ci)).join('');
+      </div>` + jeFinalCard() + cats.map((c, ci) => jeCatCard(c, ci)).join('');
 
     $('jeCats').onchange = () => resizeJeop(+$('jeCats').value || 5, +$('jePer').value || 5);
     $('jePer').onchange = () => resizeJeop(+$('jeCats').value || 5, +$('jePer').value || 5);
@@ -147,6 +147,24 @@
           if (count >= 5) { el.checked = false; toast('Max 5 daily doubles'); return; }
         }
         Store.patch((s) => {
+          // Final Jeopardy fields (f-prefixed kinds)
+          if (kind[0] === 'f') {
+            const F = s.questions.jeopardy.final = s.questions.jeopardy.final
+              || { category: '', q: '', type: 'mc', choices: ['', '', '', ''], answer: 0 };
+            if (kind === 'fcat') F.category = el.value;
+            else if (kind === 'fq') F.q = el.value;
+            else if (kind === 'fchoice') { if (!Array.isArray(F.choices)) F.choices = ['', '', '', '']; F.choices[+p[3]] = el.value; }
+            else if (kind === 'fansmc') F.answer = +el.value;
+            else if (kind === 'fanstf') F.answer = el.value === 'true';
+            else if (kind === 'fanstext') F.answer = el.value;
+            else if (kind === 'ftype') {
+              F.type = el.value;
+              if (F.type === 'mc') { if (!Array.isArray(F.choices)) F.choices = ['', '', '', '']; if (typeof F.answer !== 'number') F.answer = 0; }
+              else if (F.type === 'tf') { if (typeof F.answer !== 'boolean') F.answer = true; }
+              else if (typeof F.answer !== 'string') F.answer = '';
+            }
+            return;
+          }
           const cat = s.questions.jeopardy.categories[ci]; if (!cat) return;
           if (kind === 'catname') { cat.name = el.value; return; }
           const clue = cat.clues[ri]; if (!clue) return;
@@ -164,7 +182,7 @@
             else if (typeof clue.answer !== 'string') clue.answer = '';
           }
         });
-        if (el.dataset.je.startsWith('type:')) renderJeopardyEditor();  // swap answer inputs
+        if (el.dataset.je.startsWith('type:') || el.dataset.je.startsWith('ftype:')) renderJeopardyEditor();  // swap answer inputs
         if (el.dataset.je.startsWith('dd:')) updateDdCount();
       };
       if (el.tagName === 'SELECT') el.oninput = null;   // avoid double-fire on selects
@@ -175,6 +193,41 @@
     const n = J().categories.reduce((t, c) => t + c.clues.filter((x) => x.dd).length, 0);
     const el = $('jeDdCount');
     if (el) el.textContent = `◆ Daily doubles: ${n}/5`;
+  }
+
+  function jeFinalCard() {
+    const F = J().final || { category: '', q: '', type: 'mc', choices: ['', '', '', ''], answer: 0 };
+    const t = F.type || 'mc';
+    const typeSel = `<select data-je="ftype:0:0">
+      <option value="mc" ${t === 'mc' ? 'selected' : ''}>Multiple choice</option>
+      <option value="tf" ${t === 'tf' ? 'selected' : ''}>True / False</option>
+      <option value="text" ${t === 'text' ? 'selected' : ''}>Type-in</option></select>`;
+    let ans = '';
+    if (t === 'mc') {
+      ans = `<div class="je-ans">` +
+        (F.choices || ['', '', '', '']).map((ch, i) =>
+          `<input type="text" data-je="fchoice:0:0:${i}" value="${escAttr(ch)}" placeholder="Choice ${'ABCD'[i]}" />`).join('') +
+        `<select data-je="fansmc:0:0">${[0, 1, 2, 3].map((i) =>
+          `<option value="${i}" ${+F.answer === i ? 'selected' : ''}>✔ ${'ABCD'[i]}</option>`).join('')}</select></div>`;
+    } else if (t === 'tf') {
+      ans = `<div class="je-ans tf1"><select data-je="fanstf:0:0">
+        <option value="true" ${F.answer === true ? 'selected' : ''}>Correct answer: TRUE</option>
+        <option value="false" ${F.answer === false ? 'selected' : ''}>Correct answer: FALSE</option></select></div>`;
+    } else {
+      ans = `<div class="je-ans text1"><input type="text" data-je="fanstext:0:0" value="${escAttr(String(F.answer || ''))}" placeholder="Correct answer (host judges)" /></div>`;
+    }
+    return `<div class="panel q-card" style="border:2px solid var(--c-accent)">
+      <div class="q-top">
+        <span class="qnum">🏆</span>
+        <input type="text" class="qtext" data-je="fcat:0:0" value="${escAttr(F.category || '')}" placeholder="Final Jeopardy category…" />
+      </div>
+      <div class="je-clue" style="grid-template-columns:170px 1fr">
+        ${typeSel}
+        <input type="text" data-je="fq:0:0" value="${escAttr(F.q || '')}" placeholder="The Final Jeopardy clue…" />
+        ${ans}
+      </div>
+      <div class="sum">Teams lock in secret wagers before this clue is shown. Run it from Host Control → Jeopardy → 🏆 Final Jeopardy.</div>
+    </div>`;
   }
 
   function jeCatCard(c, ci) {

@@ -274,6 +274,60 @@
     }
     if (performance.now() < jpCdUntil) return;   // countdown still playing
 
+    // Category intro sweep — each category slams across the screen in turn.
+    if (s.jeop.sweepId && s.jeop.sweepId !== prev.jpSwId) {
+      prev.jpSwId = s.jeop.sweepId;
+      const cats = J.categories;
+      const total = cats.length * 1400 + 900;
+      jpCdUntil = performance.now() + total;
+      const slides = cats.map((c, i) =>
+        `<div class="jp-sw-cat" style="animation-delay:${(i * 1.4).toFixed(1)}s">${escapeHtml(c.name)}</div>`).join('');
+      stage.innerHTML = `
+        <div class="jp-sw">
+          <div class="intro-rays"></div>
+          <div class="jp-sw-kicker">TODAY'S CATEGORIES</div>
+          <div class="jp-sw-stage">${slides}</div>
+        </div>`;
+      prev.boardMode = 'jeopardy'; prev.jeopKey = 'sweep';
+      const cue = (ms, fn) => setTimeout(() => { if (Store.get().boardMode === 'jeopardy') fn(); }, ms);
+      cats.forEach((c, i) => cue(i * 1400 + 150, () => Sound.flip()));
+      cue(total - 700, () => Sound.fanfare());
+      setTimeout(() => {
+        jpCdUntil = 0; jpForceCascade = true;
+        if (Store.get().boardMode === 'jeopardy') { prev.jeopKey = 'after-cd'; render(); }
+      }, total);
+      Theme.apply();
+      return;
+    }
+
+    // Final Jeopardy stages: category+wagers → clue → answer.
+    const fin = s.jeop.final;
+    if (fin && fin.stage) {
+      const F = J.final || {};
+      const key = 'final|' + fin.stage + '|' + (F.q || '') + '|' + (F.category || '');
+      if (prev.boardMode !== 'jeopardy' || prev.jeopKey !== key) {
+        const wasFinal = String(prev.jeopKey || '').startsWith('final|');
+        if (fin.stage === 'category') {
+          stage.innerHTML = `
+            <div class="jp-final">
+              <div class="intro-rays"></div>
+              <div class="jf-kicker">FINAL JEOPARDY</div>
+              <div class="jf-cat">${escapeHtml(F.category || '???')}</div>
+              <div class="jf-sub">LOCK IN YOUR WAGERS…</div>
+            </div>`;
+          if (prev.boardMode === 'jeopardy') Sound.fanfare();
+        } else {
+          const fakeJ = { categories: [{ name: 'FINAL · ' + (F.category || 'JEOPARDY'), clues: [Object.assign({ value: '★' }, F, { dd: false })] }] };
+          stage.innerHTML = jeopClueHtml(s, fakeJ, { c: 0, r: 0, showAnswer: fin.stage === 'answer' });
+          if (wasFinal) { if (fin.stage === 'answer') Sound.ding(); else Sound.flip(); }
+        }
+        prev.boardMode = 'jeopardy'; prev.jeopKey = key;
+      }
+      updateJpTimer(s);
+      Theme.apply();
+      return;
+    }
+
     if (act) {
       // Daily Double splash before the clue itself.
       const cat0 = J.categories[act.c];
@@ -308,6 +362,7 @@
         prev.boardMode = 'jeopardy';
         prev.jeopKey = key;
       }
+      updateJpTimer(s);
     } else {
       // The grid. Rebuild only on structure change or mode entry (with a
       // cascade animation on entry); update used-tile state in place.
@@ -377,11 +432,33 @@
     }
     return `
       <div class="jp-clue">
+        <div class="jp-timer hidden">
+          <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="8"/><circle class="jp-ring" cx="50" cy="50" r="44" fill="none" stroke="var(--c-accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="276" stroke-dashoffset="0" transform="rotate(-90 50 50)"/></svg>
+          <div class="t-num">30</div>
+        </div>
         ${clue.dd ? '<div class="jp-dd-badge">◆ DAILY DOUBLE</div>' : ''}
         <div class="jp-cat">${escapeHtml(cat.name)} · <b>${clue.value}</b></div>
         <div class="jp-q">${escapeHtml(clue.q)}</div>
         ${body}
       </div>`;
+  }
+
+  // 30-second clue clock: number + ring update in place each tick; at zero
+  // the question box flips from blue to bright red with a buzzer.
+  function updateJpTimer(s) {
+    const el = stage.querySelector('.jp-timer'); if (!el) return;
+    const max = s.jeop.timerMax || 30, sec = s.jeop.timerSec, run = s.jeop.timerRun;
+    const started = run || sec < max;
+    el.classList.toggle('hidden', !started);
+    const num = el.querySelector('.t-num'); if (num) num.textContent = Math.max(0, sec);
+    const ring = el.querySelector('.jp-ring');
+    if (ring) ring.style.strokeDashoffset = (276 * (1 - Math.max(0, Math.min(1, sec / max)))).toFixed(1);
+    el.classList.toggle('warn', started && sec <= 5);
+    const up = started && sec <= 0;
+    const clue = stage.querySelector('.jp-clue');
+    if (clue) clue.classList.toggle('times-up', up);
+    if (up && prev.jpTimerPrev > 0) Sound.timeUp();
+    prev.jpTimerPrev = sec;
   }
 
   /* ---------------- FACE-OFF: MATCHUP + QUESTION screens ---------------- */
