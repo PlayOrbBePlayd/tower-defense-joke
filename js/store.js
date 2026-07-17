@@ -85,6 +85,13 @@
       revealAll: false,
     },
 
+    // ---- Jeopardy opener round ----
+    jeop: {
+      active: null,            // null | {c, r, showAnswer:false}
+      used: {},                // {"c:r": true}
+      awardSign: 1,            // +1 award / -1 deduct
+    },
+
     // ---- Which mode the BOARD is currently showing ----
     boardMode: 'logo',         // 'logo' | 'main' | 'fast'
 
@@ -92,6 +99,7 @@
     questions: {
       main: [],                // {q, answers:[{text,points}]}
       fast: [],                // {q, answers:[{text,points}]}  (answers = ranked responses)
+      jeopardy: { categories: [] },   // see js/data.js for the clue shape
     },
 
     // ---- Saved client branding+content profiles ----
@@ -134,10 +142,15 @@
     merged.main = Object.assign({}, base.main, s.main || {});
     merged.fast = Object.assign({}, base.fast, s.fast || {});
     merged.event = Object.assign({}, base.event, s.event || {});
+    merged.jeop = Object.assign({}, base.jeop, s.jeop || {});
     merged.teams = s.teams && s.teams.length ? s.teams : base.teams;
     if (!s.questions || !s.questions.main || !s.questions.main.length) {
       merged.questions = global.FF_DEFAULT_QUESTIONS
         ? clone(global.FF_DEFAULT_QUESTIONS) : base.questions;
+    }
+    // Older saves predate the Jeopardy bank — seed it from defaults.
+    if (!merged.questions.jeopardy && global.FF_DEFAULT_QUESTIONS) {
+      merged.questions.jeopardy = clone(global.FF_DEFAULT_QUESTIONS.jeopardy);
     }
     if (!Array.isArray(merged.main.revealed)) merged.main.revealed = [];
     // Pad older saves' fast-money slots up to the current count (5 -> 8).

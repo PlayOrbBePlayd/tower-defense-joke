@@ -18,6 +18,13 @@
     const q = S().questions;
     $('tabs').querySelector('[data-t="main"]').textContent = `Main Game (${q.main.length})`;
     $('tabs').querySelector('[data-t="fast"]').textContent = `Speed Round (${q.fast.length})`;
+    const J = q.jeopardy || { categories: [] };
+    const per = J.categories.length ? Math.max(...J.categories.map((c) => c.clues.length)) : 0;
+    $('tabs').querySelector('[data-t="jeopardy"]').textContent = `Jeopardy (${J.categories.length}×${per})`;
+
+    // The Jeopardy bank has its own structure & renderer.
+    $('addQ').classList.toggle('hidden', tab === 'jeopardy');
+    if (tab === 'jeopardy') { renderJeopardyEditor(); return; }
 
     const list = $('list');
     const qs = bank();
@@ -108,6 +115,110 @@
     Store.patch((s) => { const a = s.questions[tab]; const t = a[qi]; a[qi] = a[ni]; a[ni] = t; }); render();
   }
 
+  /* ---------------- JEOPARDY editor ---------------- */
+  function J() { return S().questions.jeopardy || { categories: [] }; }
+
+  function renderJeopardyEditor() {
+    const cats = J().categories;
+    const per = cats.length ? Math.max(...cats.map((c) => c.clues.length)) : 5;
+    $('list').innerHTML = `
+      <div class="panel q-card">
+        <div class="je-config">
+          <label class="fld" style="margin:0">Categories</label>
+          <input type="number" id="jeCats" min="1" max="8" value="${cats.length || 5}" />
+          <label class="fld" style="margin:0">Clues per category</label>
+          <input type="number" id="jePer" min="1" max="8" value="${per || 5}" />
+          <span class="sum">Answer formats per clue: multiple choice, true/false, or type-in. Values default to row × 100.</span>
+        </div>
+      </div>` + cats.map((c, ci) => jeCatCard(c, ci)).join('');
+
+    $('jeCats').onchange = () => resizeJeop(+$('jeCats').value || 5, +$('jePer').value || 5);
+    $('jePer').onchange = () => resizeJeop(+$('jeCats').value || 5, +$('jePer').value || 5);
+
+    // One delegated handler covers every clue field.
+    $('list').querySelectorAll('[data-je]').forEach((el) => {
+      el.onchange = el.oninput = () => {
+        const p = el.dataset.je.split(':');
+        const kind = p[0], ci = +p[1], ri = +p[2];
+        Store.patch((s) => {
+          const cat = s.questions.jeopardy.categories[ci]; if (!cat) return;
+          if (kind === 'catname') { cat.name = el.value; return; }
+          const clue = cat.clues[ri]; if (!clue) return;
+          if (kind === 'q') clue.q = el.value;
+          else if (kind === 'val') clue.value = +el.value || 0;
+          else if (kind === 'choice') { if (!Array.isArray(clue.choices)) clue.choices = ['', '', '', '']; clue.choices[+p[3]] = el.value; }
+          else if (kind === 'ansmc') clue.answer = +el.value;
+          else if (kind === 'anstf') clue.answer = el.value === 'true';
+          else if (kind === 'anstext') clue.answer = el.value;
+          else if (kind === 'type') {
+            clue.type = el.value;
+            if (clue.type === 'mc') { if (!Array.isArray(clue.choices)) clue.choices = ['', '', '', '']; if (typeof clue.answer !== 'number') clue.answer = 0; }
+            else if (clue.type === 'tf') { if (typeof clue.answer !== 'boolean') clue.answer = true; }
+            else if (typeof clue.answer !== 'string') clue.answer = '';
+          }
+        });
+        if (el.dataset.je.startsWith('type:')) renderJeopardyEditor();  // swap answer inputs
+      };
+      if (el.tagName === 'SELECT') el.oninput = null;   // avoid double-fire on selects
+    });
+  }
+
+  function jeCatCard(c, ci) {
+    const clues = c.clues.map((clue, ri) => {
+      const t = clue.type || 'mc';
+      const typeSel = `<select data-je="type:${ci}:${ri}">
+        <option value="mc" ${t === 'mc' ? 'selected' : ''}>Multiple choice</option>
+        <option value="tf" ${t === 'tf' ? 'selected' : ''}>True / False</option>
+        <option value="text" ${t === 'text' ? 'selected' : ''}>Type-in</option></select>`;
+      let ans = '';
+      if (t === 'mc') {
+        ans = `<div class="je-ans">` +
+          (clue.choices || ['', '', '', '']).map((ch, i) =>
+            `<input type="text" data-je="choice:${ci}:${ri}:${i}" value="${escAttr(ch)}" placeholder="Choice ${'ABCD'[i]}" />`).join('') +
+          `<select data-je="ansmc:${ci}:${ri}">${[0, 1, 2, 3].map((i) =>
+            `<option value="${i}" ${+clue.answer === i ? 'selected' : ''}>✔ ${'ABCD'[i]}</option>`).join('')}</select></div>`;
+      } else if (t === 'tf') {
+        ans = `<div class="je-ans tf1"><select data-je="anstf:${ci}:${ri}">
+          <option value="true" ${clue.answer === true ? 'selected' : ''}>Correct answer: TRUE</option>
+          <option value="false" ${clue.answer === false ? 'selected' : ''}>Correct answer: FALSE</option></select></div>`;
+      } else {
+        ans = `<div class="je-ans text1"><input type="text" data-je="anstext:${ci}:${ri}" value="${escAttr(String(clue.answer || ''))}" placeholder="Correct answer (host judges responses)" /></div>`;
+      }
+      return `<div class="je-clue">
+        <input type="number" data-je="val:${ci}:${ri}" value="${clue.value}" title="Value" />
+        ${typeSel}
+        <input type="text" data-je="q:${ci}:${ri}" value="${escAttr(clue.q)}" placeholder="Clue / question…" />
+        ${ans}
+      </div>`;
+    }).join('');
+    return `<div class="panel q-card">
+      <div class="q-top">
+        <span class="qnum">${ci + 1}</span>
+        <input type="text" class="qtext" data-je="catname:${ci}" value="${escAttr(c.name)}" placeholder="Category name…" />
+      </div>
+      ${clues}
+    </div>`;
+  }
+
+  // Grow/shrink the board, preserving everything that overlaps.
+  function resizeJeop(cats, per) {
+    cats = Math.max(1, Math.min(8, cats));
+    per = Math.max(1, Math.min(8, per));
+    Store.patch((s) => {
+      const Jq = s.questions.jeopardy;
+      while (Jq.categories.length < cats) Jq.categories.push({ name: 'Category ' + (Jq.categories.length + 1), clues: [] });
+      Jq.categories.length = cats;
+      Jq.categories.forEach((c) => {
+        while (c.clues.length < per) c.clues.push({ q: '', type: 'mc', choices: ['', '', '', ''], answer: 0, value: (c.clues.length + 1) * 100 });
+        c.clues.length = per;
+      });
+      // board layout changed — clear used/active so stale keys can't linger
+      s.jeop.used = {}; s.jeop.active = null;
+    });
+    render();
+    toast(`Board is now ${cats} × ${per}`);
+  }
+
   $('addQ').onclick = () => {
     Store.patch((s) => { s.questions[tab].push({ q: 'New question…', answers: [{ text: '', points: 0 }, { text: '', points: 0 }, { text: '', points: 0 }] }); });
     render(); toast('Question added');
@@ -129,7 +240,7 @@
       try {
         const data = JSON.parse(r.result);
         if (!data.main || !data.fast) throw new Error('Missing main/fast arrays');
-        Store.patch((s) => { s.questions = data; });
+        Store.patch((s) => { const keep = s.questions.jeopardy; s.questions = data; if (!s.questions.jeopardy) s.questions.jeopardy = keep || { categories: [] }; });
         render(); toast('Imported ' + (data.main.length + data.fast.length) + ' questions');
       } catch (err) { alert('Invalid file: ' + err.message); }
     };

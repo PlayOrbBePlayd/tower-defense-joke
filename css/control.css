@@ -98,6 +98,28 @@
   background:rgba(255,255,255,.1); color:#fff; }
 .ev-team .mini:hover { background: var(--c-accent); color:#3a2500; }
 
+/* ---- Jeopardy control ---- */
+.jpc-top { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:12px; }
+.jpc-grid { display:grid; gap:6px; margin-bottom:14px; }
+.jpc-grid .h { text-align:center; font-family:var(--font-cond); font-weight:700; text-transform:uppercase;
+  font-size:12px; color:#cdd8ff; background:rgba(255,255,255,.07); border-radius:7px; padding:6px 4px;
+  overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.jpc-grid button { border:none; cursor:pointer; border-radius:8px; padding:10px 4px;
+  font-family:var(--font-display); font-size:16px; color:var(--c-accent);
+  background:linear-gradient(180deg,#123a9e,#0a2470); box-shadow:inset 0 0 0 1px rgba(255,255,255,.15); }
+.jpc-grid button:hover { filter:brightness(1.25); }
+.jpc-grid button.used { background:#0a1030; color:#3d4a7a; text-decoration:line-through; }
+.jpc-grid button.live { outline:3px solid var(--c-accent); }
+.jpc-clue { border-top:2px solid var(--c-accent); padding-top:12px; }
+.jpc-info { display:flex; flex-direction:column; gap:4px; margin-bottom:10px; }
+.jpc-cat { font-family:var(--font-cond); font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:#9fb0e6; font-size:13px; }
+.jpc-q { font-family:var(--font-cond); font-weight:700; font-size:20px; color:#fff; line-height:1.2; }
+.jpc-a { font-size:14px; color:#3ce88a; font-weight:600; }
+.jpc-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+.jpc-val { font-family:var(--font-cond); font-weight:700; color:#cdd8ff; }
+.jpc-val b { font-family:var(--font-display); color:var(--c-accent); font-size:20px; }
+.jpc-actions .btn.on { outline:3px solid var(--c-accent); }
+
 /* Face-off flow strip (top of Main panel) */
 .faceoff-strip { display:flex; align-items:center; gap:8px; flex-wrap:wrap;
   background: rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.1); border-radius:12px;

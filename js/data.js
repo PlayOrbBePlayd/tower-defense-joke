@@ -4,6 +4,66 @@
  * swap whole sets via Import/Export JSON. Points should ideally sum near 100
  * for each main question (survey style), but the app does not enforce it. */
 window.FF_DEFAULT_QUESTIONS = {
+  /* Jeopardy-style opener board. Structure:
+   *   categories: [{ name, clues: [{ q, type, choices?, answer, value }] }]
+   *   type 'mc'   -> choices: 4 strings, answer: correct index (0-3)
+   *   type 'tf'   -> answer: true | false
+   *   type 'text' -> answer: string (host judges typed/spoken responses)
+   * Categories and clues-per-category are fully editable in the Editor. */
+  jeopardy: {
+    categories: [
+      {
+        name: 'Office Life',
+        clues: [
+          { q: 'This "brief" gathering famously could have been an email.', type: 'text', answer: 'A meeting', value: 100 },
+          { q: 'True or False: The office thermostat pleases everyone.', type: 'tf', answer: false, value: 200 },
+          { q: 'Which of these is the universal signal that a meeting is over?', type: 'mc', choices: ['Someone stands up', '"Well…"', 'Laptops close', 'All of the above'], answer: 3, value: 300 },
+          { q: 'This kitchen appliance is the #1 suspect in office fish-smell crimes.', type: 'text', answer: 'The microwave', value: 400 },
+          { q: 'Which phrase means "I stopped listening five minutes ago"?', type: 'mc', choices: ['"Circle back"', '"Great point"', '"Per my last email"', '"Let\'s take this offline"'], answer: 1, value: 500 },
+        ],
+      },
+      {
+        name: 'Pop Culture',
+        clues: [
+          { q: 'True or False: A group of superhero movies sharing one storyline is called a "cinematic universe."', type: 'tf', answer: true, value: 100 },
+          { q: 'Which app is famous for 15-second dance trends?', type: 'mc', choices: ['LinkedIn', 'TikTok', 'Excel', 'Zoom'], answer: 1, value: 200 },
+          { q: 'This streaming habit means watching an entire season in one sitting.', type: 'text', answer: 'Binge-watching', value: 300 },
+          { q: 'Which of these is NOT a real award show?', type: 'mc', choices: ['The Oscars', 'The Grammys', 'The Streamies', 'The Emmys'], answer: 2, value: 400 },
+          { q: 'True or False: The floss started as a dental hygiene technique.', type: 'tf', answer: false, value: 500 },
+        ],
+      },
+      {
+        name: 'Food & Drink',
+        clues: [
+          { q: 'This Italian dish is the most popular delivery food on Earth.', type: 'text', answer: 'Pizza', value: 100 },
+          { q: 'True or False: Espresso has more caffeine per cup than drip coffee.', type: 'tf', answer: false, value: 200 },
+          { q: 'Which of these is NOT traditionally in guacamole?', type: 'mc', choices: ['Avocado', 'Lime', 'Mayonnaise', 'Cilantro'], answer: 2, value: 300 },
+          { q: 'This "boba" drink originated in Taiwan.', type: 'text', answer: 'Bubble tea', value: 400 },
+          { q: 'Which country consumes the most coffee per person?', type: 'mc', choices: ['USA', 'Italy', 'Finland', 'Brazil'], answer: 2, value: 500 },
+        ],
+      },
+      {
+        name: 'World Facts',
+        clues: [
+          { q: 'This is the largest ocean on Earth.', type: 'text', answer: 'The Pacific', value: 100 },
+          { q: 'True or False: Australia is wider than the Moon.', type: 'tf', answer: true, value: 200 },
+          { q: 'Which country has the most people?', type: 'mc', choices: ['China', 'India', 'USA', 'Indonesia'], answer: 1, value: 300 },
+          { q: 'This many time zones span Russia.', type: 'mc', choices: ['5', '7', '9', '11'], answer: 3, value: 400 },
+          { q: 'True or False: There are more possible chess games than atoms in the observable universe.', type: 'tf', answer: true, value: 500 },
+        ],
+      },
+      {
+        name: 'Tech & Gadgets',
+        clues: [
+          { q: 'This fruit-named company makes the iPhone.', type: 'text', answer: 'Apple', value: 100 },
+          { q: 'True or False: "Wi-Fi" is short for "Wireless Fidelity."', type: 'tf', answer: false, value: 200 },
+          { q: 'What does "CC" mean on an email?', type: 'mc', choices: ['Carbon copy', 'Courtesy copy', 'Copy confirm', 'Cool colleague'], answer: 0, value: 300 },
+          { q: 'This key combo is the universal "undo."', type: 'text', answer: 'Ctrl+Z (Cmd+Z)', value: 400 },
+          { q: 'Which came first?', type: 'mc', choices: ['Google', 'Facebook', 'The DVD', 'The iPod'], answer: 2, value: 500 },
+        ],
+      },
+    ],
+  },
   main: [
     {
       q: "Name something people do the moment they wake up in the morning.",

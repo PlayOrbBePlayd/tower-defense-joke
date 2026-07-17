@@ -21,6 +21,7 @@
       <button class="connection" id="syncBtn" title="Cross-device sync"><span class="dot-live" id="syncDot"></span> <span id="syncLabel">Same-device</span></button>
       <div class="mode-tabs" id="modeTabs">
         <button data-mode="logo">Title</button>
+        <button data-mode="jeopardy">Jeopardy</button>
         <button data-mode="main" class="active">Main Game</button>
         <button data-mode="fast">Fast Money</button>
         <button data-mode="event">Event</button>
@@ -127,6 +128,39 @@
             <button class="btn red sm" id="fmResetRound">↺ Reset Fast Money</button>
             <div class="fm-total-big" id="fmTotal" style="flex:1">0</div>
             <button class="btn green" id="fmWin">🎉 Celebrate Win</button>
+          </div>
+        </div>
+
+        <!-- JEOPARDY PANEL -->
+        <div class="panel hidden" id="jeopPanel">
+          <h2>🟦 Jeopardy — Opener Round</h2>
+          <div class="jpc-top">
+            <span class="hint" style="margin:0">Tap a tile to put the clue on the board. Questions, categories and board size live in the
+              <a href="editor.html" target="_blank" style="color:var(--c-accent)">Editor → Jeopardy</a>.</span>
+            <button class="btn ghost sm" id="jpResetBoard">↺ Reset board (all tiles back)</button>
+          </div>
+          <div class="jpc-grid" id="jpGrid"></div>
+
+          <!-- Active clue controls -->
+          <div class="jpc-clue hidden" id="jpClueCtl">
+            <div class="jpc-info">
+              <span class="jpc-cat" id="jpCat"></span>
+              <span class="jpc-q" id="jpQ"></span>
+              <span class="jpc-a" id="jpA"></span>
+            </div>
+            <div class="jpc-actions">
+              <button class="btn gold" id="jpReveal">💡 Reveal Answer</button>
+              <span class="fo-group">
+                <button class="btn green sm" id="jpSignPlus">＋ Award</button>
+                <button class="btn red sm" id="jpSignMinus">－ Deduct</button>
+              </span>
+              <span class="jpc-val">Value: <b id="jpVal">0</b></span>
+              <span class="ea-spacer" style="flex:1"></span>
+              <button class="btn blue sm" id="jpBack">← Board (keep tile)</button>
+              <button class="btn gold sm" id="jpDone">✓ Done (mark used)</button>
+            </div>
+            <div class="ea-hint">Tap a team to apply the value:</div>
+            <div class="ea-grid" id="jpAward"></div>
           </div>
         </div>
 

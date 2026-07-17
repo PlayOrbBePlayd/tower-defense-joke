@@ -76,6 +76,22 @@ For same-device use and as a shareable frontend, publish to GitHub Pages:
 
 ---
 
+## The Jeopardy opener 🟦
+
+Start any event with a classic **Jeopardy-style board** (the **Jeopardy** tab in
+Host Control): category headers across the top, gold point values below, with a
+cascade reveal, tile sheen, and a "clues left" counter in the header.
+
+- **Fully customizable** in the **Editor → Jeopardy** tab: category names, board
+  size (categories × clues per category, default 5×5), values, and every clue.
+- **Three answer formats per clue**: multiple choice (all four choices appear on
+  the board with the question), true/false, or type-in (host judges).
+- **Run it**: tap a tile in Control → the clue fills the board → **Reveal Answer**
+  (correct choice glows green; type-ins show a gold answer banner) → **Award or
+  Deduct** the tile's value to any team → **Done** dims the tile. Team scores
+  feed the same leaderboard as the Feud rounds, so the whole event is one game.
+- **↺ Reset board** brings all tiles back (scores kept).
+
 ## The two game modes
 
 ### 1. Main Game (standard round)

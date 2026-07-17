@@ -49,6 +49,13 @@
       document.getElementById('t1name').textContent = 'FAST MONEY';
       document.getElementById('t1score').textContent = 'P' + (s.fast.playerView === 2 ? 2 : 1);
       pod1.classList.remove('active');
+    } else if (s.boardMode === 'jeopardy') {
+      const J = s.questions.jeopardy || { categories: [] };
+      const total = J.categories.reduce((t, c) => t + c.clues.length, 0);
+      const used = Object.keys(s.jeop.used || {}).length;
+      document.getElementById('t1name').textContent = 'CLUES LEFT';
+      document.getElementById('t1score').textContent = Math.max(0, total - used);
+      pod1.classList.remove('active');
     } else if (s.event.on) {
       document.getElementById('t1name').textContent = 'ROUND';
       document.getElementById('t1score').textContent = s.event.round + '/' + s.event.totalRounds;
@@ -68,6 +75,7 @@
     // Mode routing
     if (s.boardMode === 'intro') renderIntro(s);
     else if (s.boardMode === 'outro') renderOutro(s);
+    else if (s.boardMode === 'jeopardy') renderJeopardy(s);
     else if (s.boardMode === 'main') renderMain(s);
     else if (s.boardMode === 'fast') renderFast(s);
     else if (s.boardMode === 'leaderboard') renderLeaderboard(s);
@@ -223,6 +231,96 @@
       const t = Store.get().theme;
       Confetti.fire(confettiCanvas, { colors: [t.accent, '#ffffff', '#7ee6a5'], count: 150 });
     });
+  }
+
+  /* ---------------- JEOPARDY (opener board) ---------------- */
+  function renderJeopardy(s) {
+    const J = s.questions.jeopardy || { categories: [] };
+    const act = s.jeop.active;
+
+    if (act) {
+      // Full-screen clue view (rebuild on clue/reveal change)
+      const key = 'clue|' + act.c + ':' + act.r + '|' + !!act.showAnswer;
+      if (prev.boardMode !== 'jeopardy' || prev.jeopKey !== key) {
+        const wasClue = prev.boardMode === 'jeopardy' && String(prev.jeopKey).startsWith('clue|');
+        stage.innerHTML = jeopClueHtml(s, J, act);
+        if (!wasClue) Sound.flip();
+        else if (act.showAnswer && !prev.jeopShowAns) Sound.ding();
+        prev.jeopShowAns = !!act.showAnswer;
+        prev.boardMode = 'jeopardy';
+        prev.jeopKey = key;
+      }
+    } else {
+      // The grid. Rebuild only on structure change or mode entry (with a
+      // cascade animation on entry); update used-tile state in place.
+      const structKey = 'grid|' + JSON.stringify(J.categories.map((c) => [c.name, c.clues.map((x) => x.value)]));
+      const entering = prev.boardMode !== 'jeopardy' || String(prev.jeopKey).startsWith('clue|');
+      if (entering || prev.jeopKey !== structKey) {
+        stage.innerHTML = jeopGridHtml(J, entering && prev.boardMode !== 'jeopardy');
+        prev.boardMode = 'jeopardy';
+        prev.jeopKey = structKey;
+        prev.jeopShowAns = false;
+      }
+      stage.querySelectorAll('.jp-tile').forEach((el) => {
+        el.classList.toggle('used', !!s.jeop.used[el.dataset.k]);
+      });
+    }
+    Theme.apply();
+  }
+
+  function jeopGridHtml(J, cascade) {
+    const cats = J.categories;
+    if (!cats.length) return '<div class="jp-empty">Add Jeopardy categories in the Editor.</div>';
+    const rows = Math.max(...cats.map((c) => c.clues.length));
+    let cells = '';
+    let idx = 0;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cats.length; c++) {
+        const clue = cats[c].clues[r];
+        const delay = cascade ? ` style="animation-delay:${(idx * 0.03).toFixed(2)}s"` : '';
+        cells += clue
+          ? `<div class="jp-tile ${cascade ? 'pop' : ''}" data-k="${c}:${r}"${delay}><span>${clue.value}</span></div>`
+          : `<div class="jp-tile blank"></div>`;
+        idx++;
+      }
+    }
+    const heads = cats.map((c) => `<div class="jp-head ${cascade ? 'pop' : ''}">${escapeHtml(c.name)}</div>`).join('');
+    return `
+      <div class="jp-board" style="--cols:${cats.length}">
+        <div class="jp-grid heads">${heads}</div>
+        <div class="jp-grid" style="--rows:${rows}">${cells}</div>
+      </div>`;
+  }
+
+  function jeopClueHtml(s, J, act) {
+    const cat = J.categories[act.c];
+    const clue = cat && cat.clues[act.r];
+    if (!clue) return '<div class="jp-empty">Clue not found.</div>';
+    const rev = !!act.showAnswer;
+    let body = '';
+    if (clue.type === 'mc') {
+      const L = ['A', 'B', 'C', 'D'];
+      body = `<div class="jp-choices ${rev ? 'revealed' : ''}">` +
+        (clue.choices || []).slice(0, 4).map((ch, i) => `
+          <div class="jp-choice ${rev && i === +clue.answer ? 'correct' : ''}">
+            <b>${L[i]}</b><span>${escapeHtml(ch)}</span>
+          </div>`).join('') + '</div>';
+    } else if (clue.type === 'tf') {
+      body = `<div class="jp-choices tf ${rev ? 'revealed' : ''}">
+        <div class="jp-choice ${rev && clue.answer === true ? 'correct' : ''}"><b>✔</b><span>TRUE</span></div>
+        <div class="jp-choice ${rev && clue.answer === false ? 'correct' : ''}"><b>✘</b><span>FALSE</span></div>
+      </div>`;
+    } else if (rev) {
+      body = `<div class="jp-answer">✔ ${escapeHtml(String(clue.answer || ''))}</div>`;
+    } else {
+      body = `<div class="jp-typein">TYPE-IN · say or write your answer!</div>`;
+    }
+    return `
+      <div class="jp-clue">
+        <div class="jp-cat">${escapeHtml(cat.name)} · <b>${clue.value}</b></div>
+        <div class="jp-q">${escapeHtml(clue.q)}</div>
+        ${body}
+      </div>`;
   }
 
   /* ---------------- FACE-OFF: MATCHUP + QUESTION screens ---------------- */
