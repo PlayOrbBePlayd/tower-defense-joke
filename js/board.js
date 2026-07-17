@@ -45,7 +45,7 @@
       document.getElementById('t0score').textContent = s.teams[0].score;
       pod0.classList.toggle('active', s.main.activeTeam === 0 && s.boardMode === 'main');
     }
-    if (s.boardMode === 'fast') {
+    if (s.boardMode === 'fast' || s.boardMode === 'fast-title') {
       document.getElementById('t1name').textContent = 'FAST MONEY';
       document.getElementById('t1score').textContent = 'P' + (s.fast.playerView === 2 ? 2 : 1);
       pod1.classList.remove('active');
@@ -78,6 +78,7 @@
     else if (s.boardMode === 'jeopardy') renderJeopardy(s);
     else if (s.boardMode === 'jeopardy-title') renderJeopardyTitle(s);
     else if (s.boardMode === 'feud-title') renderFeudTitle(s);
+    else if (s.boardMode === 'fast-title') renderFastTitle(s);
     else if (s.boardMode === 'main') renderMain(s);
     else if (s.boardMode === 'fast') renderFast(s);
     else if (s.boardMode === 'leaderboard') renderLeaderboard(s);
@@ -94,7 +95,9 @@
     pod0.style.visibility = isJp ? 'hidden' : '';
     pod1.style.visibility = isJp ? 'hidden' : '';
     const plate = document.querySelector('.board-brand .plate-title');
+    const isFm = s.boardMode === 'fast' || s.boardMode === 'fast-title';
     if (plate) plate.textContent = isJp ? 'TBROI JEOPARDY!'
+      : isFm ? 'FAST MONEY ROUND'
       : (s.boardMode === 'logo' ? '' : (s.theme.title || 'FAMILY FEUD'));
   }
 
@@ -184,6 +187,43 @@
         ${withCountdown ? '<div class="intro-count"><span>3</span><span>2</span><span>1</span></div>' : ''}
         <div class="jp-cd-title ${withCountdown ? '' : 'now'}">TBROI <span>JEOPARDY!</span></div>
         <div class="jp-cd-sub ${withCountdown ? '' : 'now'}">GET READY TO RING IN…</div>
+      </div>`;
+  }
+
+  /* ---------------- FAST MONEY TITLE PAGE (with optional 3-2-1) ----------- */
+  // Same show-open treatment as Jeopardy: an optional 3-2-1 countdown slams
+  // the title in, then it HOLDS until the host explicitly shows the board.
+  function renderFastTitle(s) {
+    const cdFresh = s.fast.countdownId && s.fast.countdownId !== prev.fmCdId;
+    const key = 'fmt|' + (s.fast.countdownId || 0);
+    if (prev.boardMode !== 'fast-title' || prev.fmtKey !== key) {
+      if (cdFresh) {
+        prev.fmCdId = s.fast.countdownId;
+        stage.innerHTML = fmTitleHtml(s, true);
+        const cue = (ms, fn) => setTimeout(() => { if (Store.get().boardMode === 'fast-title') fn(); }, ms);
+        Sound.flip(); cue(1000, () => Sound.flip()); cue(2000, () => Sound.flip());
+        cue(3000, () => Sound.fanfare());
+      } else {
+        stage.innerHTML = fmTitleHtml(s, false);
+        if (prev.boardMode && prev.boardMode !== 'fast-title') Sound.ding();
+      }
+      prev.boardMode = 'fast-title';
+      prev.fmtKey = key;
+    }
+    Theme.apply();
+  }
+  function fmTitleHtml(s, withCountdown) {
+    const title = (s.theme.title || 'FAMILY FEUD');
+    const parts = title.split(' ');
+    const last = parts.pop();
+    const first = parts.join(' ');
+    return `
+      <div class="jp-cd fm-cd">
+        <div class="intro-rays"></div>
+        ${withCountdown ? '<div class="intro-count"><span>3</span><span>2</span><span>1</span></div>' : ''}
+        <div class="fm-cd-kicker ${withCountdown ? '' : 'now'}">💰 FAST MONEY ROUND 💰</div>
+        <div class="jp-cd-title ${withCountdown ? '' : 'now'}">${escapeHtml(first)} <span>${escapeHtml(last)}</span></div>
+        <div class="jp-cd-sub ${withCountdown ? '' : 'now'}">TWO PLAYERS · BEAT THE CLOCK · 200 TO WIN</div>
       </div>`;
   }
 
