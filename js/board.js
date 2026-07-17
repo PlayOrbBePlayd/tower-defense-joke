@@ -638,8 +638,12 @@
     if (!q) { renderLogo(s); return; }
     const revealedKey = s.main.questionIndex + '|' + s.main.revealed.join('') + '|' + s.main.showQuestion + '|' + s.main.bank + '|' + s.main.awardTeam;
 
-    if (prev.boardMode !== 'main' || prev.revealedKeyStruct !== structKey(s, q)) {
-      stage.innerHTML = mainHtml(s, q);
+    // Entering from another screen (title, matchup, …) → the whole board
+    // slams in: banner bounces, frame pops, slats cascade like Jeopardy.
+    const entering = prev.boardMode !== 'main';
+    if (entering || prev.revealedKeyStruct !== structKey(s, q)) {
+      stage.innerHTML = mainHtml(s, q, entering);
+      if (entering && prev.boardMode) Sound.fanfare();
       prev.boardMode = 'main';
       prev.revealedKeyStruct = structKey(s, q);
       prev.revealedKey = '';
@@ -684,11 +688,11 @@
     return s.main.questionIndex + '|' + q.answers.length;
   }
 
-  function mainHtml(s, q) {
+  function mainHtml(s, q, entering) {
     const n = q.answers.length;
     const twoCol = n > 5;
     const cells = q.answers.map((a, i) => `
-      <div class="slat" data-i="${i}">
+      <div class="slat ${entering ? 'cascade' : ''}" data-i="${i}" ${entering ? `style="animation-delay:${(0.35 + i * 0.08).toFixed(2)}s"` : ''}>
         <div class="slat-inner">
           <div class="slat-face slat-front"><div class="num">${i + 1}</div></div>
           <div class="slat-face slat-back">
@@ -700,8 +704,8 @@
       </div>`).join('');
     return `
       <div class="control-chip hidden"></div>
-      <div class="q-banner">${escapeHtml(q.q)}</div>
-      <div class="board-frame">
+      <div class="q-banner ${entering ? 'slam-in' : ''}">${escapeHtml(q.q)}</div>
+      <div class="board-frame ${entering ? 'slam-in' : ''}">
         <div class="bank-chip"><small>ROUND BANK</small><span class="amt">${s.main.bank}</span></div>
         <div class="slat-grid ${twoCol ? 'two-col' : ''}" style="grid-template-rows: repeat(${twoCol ? Math.ceil(n / 2) : n}, 1fr);">
           ${cells}
