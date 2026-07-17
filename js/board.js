@@ -85,6 +85,14 @@
 
     // Strikes big overlay (3 strikes) + single flash on each wrong answer
     renderStrikes(s);
+
+    // Jeopardy branding: hide the score/clue pods and retitle the center
+    // plate. (Runs after routing so it wins over Theme.apply's title.)
+    const isJp = s.boardMode === 'jeopardy';
+    pod0.style.visibility = isJp ? 'hidden' : '';
+    pod1.style.visibility = isJp ? 'hidden' : '';
+    const plate = document.querySelector('.board-brand .plate-title');
+    if (plate) plate.textContent = isJp ? 'TBROI JEOPARDY!' : (s.theme.title || 'FAMILY FEUD');
   }
 
   function handleFx(fx) {
@@ -234,11 +242,61 @@
   }
 
   /* ---------------- JEOPARDY (opener board) ---------------- */
+  let jpCdUntil = 0;        // countdown playing until (performance.now)
+  let jpDdUntil = 0;        // daily-double splash playing until
+  let jpForceCascade = false;
+
   function renderJeopardy(s) {
     const J = s.questions.jeopardy || { categories: [] };
     const act = s.jeop.active;
 
+    // 3-2-1 countdown, then the board cascades in.
+    if (s.jeop.countdownId && s.jeop.countdownId !== prev.jpCdId) {
+      prev.jpCdId = s.jeop.countdownId;
+      jpCdUntil = performance.now() + 4400;
+      stage.innerHTML = `
+        <div class="jp-cd">
+          <div class="intro-rays"></div>
+          <div class="intro-count"><span>3</span><span>2</span><span>1</span></div>
+          <div class="jp-cd-title">TBROI <span>JEOPARDY!</span></div>
+          <div class="jp-cd-sub">GET READY TO RING IN…</div>
+        </div>`;
+      prev.boardMode = 'jeopardy'; prev.jeopKey = 'cd';
+      const cue = (ms, fn) => setTimeout(() => { if (Store.get().boardMode === 'jeopardy') fn(); }, ms);
+      Sound.flip(); cue(1000, () => Sound.flip()); cue(2000, () => Sound.flip());
+      cue(3000, () => Sound.fanfare());
+      setTimeout(() => {
+        jpCdUntil = 0; jpForceCascade = true;
+        if (Store.get().boardMode === 'jeopardy') { prev.jeopKey = 'after-cd'; render(); }
+      }, 4400);
+      Theme.apply();
+      return;
+    }
+    if (performance.now() < jpCdUntil) return;   // countdown still playing
+
     if (act) {
+      // Daily Double splash before the clue itself.
+      const cat0 = J.categories[act.c];
+      const clue0 = cat0 && cat0.clues[act.r];
+      const actKey = 'clue|' + act.c + ':' + act.r;
+      if (clue0 && clue0.dd && prev.jpDdKey !== actKey) {
+        prev.jpDdKey = actKey;
+        jpDdUntil = performance.now() + 2600;
+        stage.innerHTML = `
+          <div class="jp-dd">
+            <div class="intro-rays"></div>
+            <div class="jp-dd-t">DAILY<br/>DOUBLE!</div>
+          </div>`;
+        Sound.fanfare();
+        setTimeout(() => {
+          jpDdUntil = 0;
+          if (Store.get().boardMode === 'jeopardy') { prev.jeopKey = 'after-dd'; render(); }
+        }, 2600);
+        prev.boardMode = 'jeopardy'; prev.jeopKey = 'dd';
+        Theme.apply();
+        return;
+      }
+      if (performance.now() < jpDdUntil) return;
       // Full-screen clue view (rebuild on clue/reveal change)
       const key = 'clue|' + act.c + ':' + act.r + '|' + !!act.showAnswer;
       if (prev.boardMode !== 'jeopardy' || prev.jeopKey !== key) {
@@ -254,12 +312,14 @@
       // The grid. Rebuild only on structure change or mode entry (with a
       // cascade animation on entry); update used-tile state in place.
       const structKey = 'grid|' + JSON.stringify(J.categories.map((c) => [c.name, c.clues.map((x) => x.value)]));
-      const entering = prev.boardMode !== 'jeopardy' || String(prev.jeopKey).startsWith('clue|');
+      const entering = prev.boardMode !== 'jeopardy' || String(prev.jeopKey).startsWith('clue|') || prev.jeopKey === 'after-cd';
       if (entering || prev.jeopKey !== structKey) {
-        stage.innerHTML = jeopGridHtml(J, entering && prev.boardMode !== 'jeopardy');
+        stage.innerHTML = jeopGridHtml(J, (entering && prev.boardMode !== 'jeopardy') || jpForceCascade);
+        jpForceCascade = false;
         prev.boardMode = 'jeopardy';
         prev.jeopKey = structKey;
         prev.jeopShowAns = false;
+        prev.jpDdKey = null;   // reopening a Daily Double replays its splash
       }
       stage.querySelectorAll('.jp-tile').forEach((el) => {
         el.classList.toggle('used', !!s.jeop.used[el.dataset.k]);
@@ -317,6 +377,7 @@
     }
     return `
       <div class="jp-clue">
+        ${clue.dd ? '<div class="jp-dd-badge">◆ DAILY DOUBLE</div>' : ''}
         <div class="jp-cat">${escapeHtml(cat.name)} · <b>${clue.value}</b></div>
         <div class="jp-q">${escapeHtml(clue.q)}</div>
         ${body}

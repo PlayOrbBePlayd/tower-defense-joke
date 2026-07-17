@@ -29,10 +29,12 @@
     /* Jeopardy editor */
     .je-config { display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
     .je-config input[type=number] { width:72px; }
-    .je-clue { display:grid; grid-template-columns:78px 170px 1fr; gap:8px; align-items:center;
+    .je-clue { display:grid; grid-template-columns:78px 170px 1fr auto; gap:8px; align-items:center;
       background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); border-radius:10px; padding:8px; margin-bottom:8px; }
     .je-ans { grid-column:1/-1; display:grid; grid-template-columns:repeat(4,1fr) auto; gap:6px; }
     .je-ans.tf1, .je-ans.text1 { grid-template-columns:1fr; }
+    .je-dd { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--c-accent); font-weight:700; white-space:nowrap; cursor:pointer; }
+    .je-dd input { width:16px; height:16px; accent-color:var(--c-accent); }
   </style>
 </head>
 <body>

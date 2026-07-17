@@ -91,6 +91,13 @@ cascade reveal, tile sheen, and a "clues left" counter in the header.
   Deduct** the tile's value to any team → **Done** dims the tile. Team scores
   feed the same leaderboard as the Feud rounds, so the whole event is one game.
 - **↺ Reset board** brings all tiles back (scores kept).
+- **🎬 Play Countdown → Board**: a 3-2-1 countdown with a "TBROI JEOPARDY!" slam,
+  then the board cascades in. While Jeopardy is on screen the header reads
+  **TBROI JEOPARDY!** (score/clue pods hidden for a clean look).
+- **◆ Daily Doubles (up to 5)**: mark clues in the Editor; opening one slams a
+  gold **DAILY DOUBLE!** splash before the clue, and the host panel gets a
+  wager box — award/deduct uses the wager instead of the tile value. Only the
+  host can see which tiles are daily doubles.
 
 ## The two game modes
 

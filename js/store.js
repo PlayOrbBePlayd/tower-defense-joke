@@ -90,6 +90,7 @@
       active: null,            // null | {c, r, showAnswer:false}
       used: {},                // {"c:r": true}
       awardSign: 1,            // +1 award / -1 deduct
+      countdownId: 0,          // bump to play the Jeopardy countdown on the board
     },
 
     // ---- Which mode the BOARD is currently showing ----
