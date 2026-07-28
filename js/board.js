@@ -84,6 +84,7 @@
     else if (s.boardMode === 'leaderboard') renderLeaderboard(s);
     else if (s.boardMode === 'matchup') renderMatchup(s);
     else if (s.boardMode === 'question') renderQuestion(s);
+    else if (s.boardMode === 'slide1' || s.boardMode === 'slide2') renderSlide(s);
     else renderLogo(s);
 
     // Strikes big overlay (3 strikes) + single flash on each wrong answer
@@ -130,6 +131,23 @@
           <div class="marquee">${'<span class="bulb"></span>'.repeat(9)}</div>
         </div>`;
       prev.boardMode = 'logo';
+    }
+    Theme.apply();
+  }
+
+  /* ---------------- EVENT SLIDES (full-screen images) ---------------- */
+  // Host-uploaded slides shown on demand; they hold until the host switches
+  // to any other screen (e.g. opening the first question).
+  function renderSlide(s) {
+    const img = s.boardMode === 'slide2' ? s.slides.s2 : s.slides.s1;
+    const key = s.boardMode + '|' + (img ? img.length : 0);
+    if (prev.boardMode !== s.boardMode || prev.slideKey !== key) {
+      stage.innerHTML = img
+        ? `<div class="ev-slide"><img src="${img}" alt="" /></div>`
+        : `<div class="ev-slide"><div class="ev-slide-none">No slide uploaded yet — use the 🖼 button next to this slide in Host Control.</div></div>`;
+      if (prev.boardMode && prev.boardMode !== s.boardMode) Sound.flip();
+      prev.boardMode = s.boardMode;
+      prev.slideKey = key;
     }
     Theme.apply();
   }

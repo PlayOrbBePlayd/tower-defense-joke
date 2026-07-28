@@ -84,6 +84,59 @@
   $('fxSmoke').onclick = () => { Store.fx('smoke'); toast('💨 Smoke machine!'); };
   $('fxLasers').onclick = () => { Store.fx('lasers'); toast('⚡ Laser show!'); };
   $('fxUfo').onclick = () => { Store.fx('ufo'); toast('🛸 UFO inbound!'); };
+  // Event slides — two host-uploaded full-screen images (prize reveal after
+  // the countdown, giveaway after the outro, …). A slide holds on the board
+  // until the host switches to any other screen.
+  let slideTarget = 's1';
+  function slideBtnLabels() {
+    const sl = S().slides || {};
+    $('showSlide1').textContent = sl.s1 ? '📽 Slide 1 ✓' : '📽 Slide 1';
+    $('showSlide2').textContent = sl.s2 ? '📽 Slide 2 ✓' : '📽 Slide 2';
+  }
+  function showSlide(which) {
+    if (!(S().slides || {})[which]) { toast('Upload that slide first — use the 🖼 button next to it'); return; }
+    Store.patch((s) => { s.boardMode = which === 's2' ? 'slide2' : 'slide1'; });
+    toast('📽 Slide up — it stays until you show another screen');
+  }
+  $('showSlide1').onclick = () => showSlide('s1');
+  $('showSlide2').onclick = () => showSlide('s2');
+  $('upSlide1').onclick = () => { slideTarget = 's1'; $('slideFile').click(); };
+  $('upSlide2').onclick = () => { slideTarget = 's2'; $('slideFile').click(); };
+  $('slideFile').onchange = (e) => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    if (f.size > 10_000_000) { alert('Please use an image under 10MB.'); return; }
+    const r = new FileReader();
+    r.onload = () => {
+      const im = new Image();
+      im.onload = () => {
+        // Downscale to projector size — the whole game lives in ~5MB storage.
+        const MAX = 1600;
+        const scale = Math.min(1, MAX / Math.max(im.width, im.height));
+        const cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(im.width * scale));
+        cv.height = Math.max(1, Math.round(im.height * scale));
+        const cx = cv.getContext('2d');
+        cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height);
+        cx.drawImage(im, 0, 0, cv.width, cv.height);
+        let url = cv.toDataURL('image/jpeg', 0.82);
+        if (url.length > 900_000) url = cv.toDataURL('image/jpeg', 0.65);
+        if (JSON.stringify(S()).length + url.length > 4_300_000) {
+          alert('Not enough room for this slide — storage is nearly full. Remove clue images or use a smaller file.');
+          return;
+        }
+        const t = slideTarget;
+        Store.patch((s) => { s.slides = s.slides || { s1: '', s2: '' }; s.slides[t] = url; });
+        slideBtnLabels();
+        toast('🖼 Slide saved — press 📽 to show it');
+      };
+      im.onerror = () => alert('Could not read that image file.');
+      im.src = r.result;
+    };
+    r.readAsDataURL(f);
+  };
+  slideBtnLabels();
+
   // Save / load the ENTIRE game (questions, images, branding, teams,
   // scores, round progress) as a portable .json file — email or USB it
   // to another laptop and Load it there to pick up exactly where you left off.
