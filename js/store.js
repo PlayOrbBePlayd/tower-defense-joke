@@ -40,6 +40,9 @@
     introId: 0,
     // Show-close outro (balloons): bump outroId to (re)play it.
     outroId: 0,
+    // Two host-uploaded event slides (data URLs) shown full-screen on demand
+    // — e.g. a prize reveal after the countdown, a giveaway after the outro.
+    slides: { s1: '', s2: '' },
 
     teams: [
       { name: 'TEAM 1', score: 0 },
@@ -152,6 +155,7 @@
     merged.fast = Object.assign({}, base.fast, s.fast || {});
     merged.event = Object.assign({}, base.event, s.event || {});
     merged.jeop = Object.assign({}, base.jeop, s.jeop || {});
+    merged.slides = Object.assign({}, base.slides, s.slides || {});
     merged.teams = s.teams && s.teams.length ? s.teams : base.teams;
     if (!s.questions || !s.questions.main || !s.questions.main.length) {
       merged.questions = global.FF_DEFAULT_QUESTIONS
