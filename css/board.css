@@ -557,11 +557,15 @@
   gap: clamp(14px, 3.4vh, 44px); text-align:center; padding: 0 4vw;
   animation: jpClueIn .4s cubic-bezier(.2,1.2,.35,1); }
 @keyframes jpClueIn { 0%{ opacity:0; transform:scale(.7);} 100%{ opacity:1; transform:scale(1);} }
-/* Event slides — full-bleed image, holds until the host switches screens */
-.ev-slide { position: fixed; inset: 0; z-index: 80; background: #04081f;
+/* Event slides — full-bleed image, holds until the host switches screens.
+   Attached to <body> and pinned with explicit offsets so it always covers
+   the real viewport, dead-center, no matter what the stage is doing. */
+.ev-slide { position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%; z-index: 80; background: #04081f;
   display: grid; place-items: center;
   animation: jpClueIn .45s cubic-bezier(.2,1.2,.35,1); }
-.ev-slide img { width: 100%; height: 100%; object-fit: contain; }
+.ev-slide img { position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: contain; object-position: center center; display: block; }
 .ev-slide-none { color: #9fb0e6; font-family: var(--font-cond); font-weight: 700;
   font-size: clamp(18px, 2.4vw, 30px); text-align: center; max-width: 700px; padding: 0 30px; }
 

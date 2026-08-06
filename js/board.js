@@ -86,6 +86,7 @@
     else if (s.boardMode === 'question') renderQuestion(s);
     else if (s.boardMode === 'slide1' || s.boardMode === 'slide2') renderSlide(s);
     else renderLogo(s);
+    if (s.boardMode !== 'slide1' && s.boardMode !== 'slide2') clearSlideLayer();
 
     // Strikes big overlay (3 strikes) + single flash on each wrong answer
     renderStrikes(s);
@@ -142,14 +143,29 @@
     const img = s.boardMode === 'slide2' ? s.slides.s2 : s.slides.s1;
     const key = s.boardMode + '|' + (img ? img.length : 0);
     if (prev.boardMode !== s.boardMode || prev.slideKey !== key) {
-      stage.innerHTML = img
-        ? `<div class="ev-slide"><img src="${img}" alt="" /></div>`
-        : `<div class="ev-slide"><div class="ev-slide-none">No slide uploaded yet — use the 🖼 button next to this slide in Host Control.</div></div>`;
+      // The overlay lives on <body>, not inside the stage: transformed
+      // ancestors turn position:fixed into "fixed to that ancestor", which
+      // shifted the slide down by the header height on some machines.
+      stage.innerHTML = '';
+      let layer = document.getElementById('slideLayer');
+      if (!layer) {
+        layer = document.createElement('div');
+        layer.id = 'slideLayer';
+        document.body.appendChild(layer);
+      }
+      layer.className = 'ev-slide';
+      layer.innerHTML = img
+        ? `<img src="${img}" alt="" />`
+        : `<div class="ev-slide-none">No slide uploaded yet — use the 🖼 button next to this slide in Host Control.</div>`;
       if (prev.boardMode && prev.boardMode !== s.boardMode) Sound.flip();
       prev.boardMode = s.boardMode;
       prev.slideKey = key;
     }
     Theme.apply();
+  }
+  function clearSlideLayer() {
+    const layer = document.getElementById('slideLayer');
+    if (layer) layer.remove();
   }
 
   /* ---------------- FAMILY FEUD TITLE PAGE ---------------- */
