@@ -23,6 +23,7 @@
   const DEFAULT_THEME = {
     title: 'FAMILY FEUD',
     subtitle: 'TEAMBUILDING ROI EDITION',
+    fastName: 'FAST MONEY ROUND',   // customizable name of the final round
     logo: '',                 // dataURL, optional
     primary: '#1746c9',       // board blue
     accent: '#ffc21c',        // gold

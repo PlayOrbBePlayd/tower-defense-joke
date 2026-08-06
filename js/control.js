@@ -322,19 +322,34 @@
   };
 
   /* ---------------- FAST MONEY ---------------- */
+  // The round's display name is customizable (Branding & Theme → Fast Money
+  // round name) and flows into the tab, panel, buttons, board and title page.
+  function fmName() { return S().theme.fastName || 'FAST MONEY ROUND'; }
+  function applyFmName() {
+    const n = fmName();
+    const tab = $('modeTabs').querySelector('[data-mode="fast"]');
+    if (tab) tab.textContent = n;
+    const h2 = document.querySelector('#fastPanel h2');
+    if (h2) h2.textContent = n + ' — Final Round';
+    $('toFast').textContent = '💰 Show ' + n;
+    $('fmShowBoard').textContent = '▶ Show ' + n;
+    $('fmResetRound').textContent = '↺ Reset ' + n;
+  }
+  applyFmName();
+
   // Title page / countdown / board — same show-open flow as Jeopardy. The
   // countdown slams the title and HOLDS until the host shows the board.
   $('fmTitleBtn').onclick = () => {
     Store.patch((s) => { s.boardMode = 'fast-title'; });
-    toast('🏷 Fast Money title page up');
+    toast('🏷 ' + fmName() + ' title page up');
   };
   $('fmCountdown').onclick = () => {
     Store.patch((s) => { s.boardMode = 'fast-title'; s.fast.countdownId = (s.fast.countdownId || 0) + 1; });
-    toast('🎬 3-2-1… holds on the title until you press Show Fast Money');
+    toast('🎬 3-2-1… holds on the title until you press Show ' + fmName());
   };
   $('fmShowBoard').onclick = () => {
     Store.patch((s) => { s.boardMode = 'fast'; });
-    toast('▶ Fast Money board up!');
+    toast('▶ ' + fmName() + ' board up!');
   };
 
   let fmPlayer = 1;
@@ -848,6 +863,7 @@
     // editor added speed-round questions) — a full re-render on every patch
     // would steal focus from the answer inputs mid-typing.
     if (document.querySelectorAll('#fmRows .fm-row').length !== Store.fastSlots()) renderFast();
+    applyFmName();
     if (!$('jeopPanel').classList.contains('hidden')) renderJpGrid();
     const cn = $('ctlClientName');
     if (cn && document.activeElement !== cn) cn.value = S().clientName || '';
