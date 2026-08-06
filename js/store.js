@@ -170,9 +170,10 @@
       merged.questions.jeopardy.final = clone(global.FF_DEFAULT_QUESTIONS.jeopardy.final);
     }
     if (!Array.isArray(merged.main.revealed)) merged.main.revealed = [];
-    // Pad fast-money slots to one per speed-round question (older saves may
-    // carry fewer slots than questions).
-    const fastWant = Math.min(12, Math.max(FAST_SLOTS, ((merged.questions || {}).fast || []).length));
+    // Pad fast-money slots to the longest answer list of any speed-round
+    // question (older saves may carry fewer slots).
+    const fastWant = Math.min(12, (((merged.questions || {}).fast) || [])
+      .reduce((m, q) => Math.max(m, (q.answers || []).length), FAST_SLOTS));
     ['p1', 'p2'].forEach((k) => {
       if (!Array.isArray(merged.fast[k])) merged.fast[k] = [];
       while (merged.fast[k].length < fastWant) {
@@ -239,16 +240,21 @@
   });
 
   // ---- Public API -----------------------------------------------------------
-  // Fast Money has one answer slot per speed-round question (capped at 12
-  // for board legibility). Keep the per-player slot arrays padded to match,
-  // so adding questions in the editor grows the round everywhere.
+  // Fast Money shows one answer slot per POSSIBLE ANSWER of the current
+  // speed-round question (capped at 12 for board legibility) — a question
+  // with 10 answers in the editor gets 10 slots on the dashboard and board.
   function fastSlotCount() {
     const qs = (state.questions && state.questions.fast) || [];
-    return Math.min(12, Math.max(1, qs.length || FAST_SLOTS));
+    const q = qs[(state.fast && state.fast.questionIndex) || 0] || qs[0];
+    const n = (q && q.answers && q.answers.length) || FAST_SLOTS;
+    return Math.min(12, Math.max(1, n));
   }
+  // Keep the per-player slot arrays long enough for EVERY question's answer
+  // list, so stepping between questions never indexes past the end.
   function normalizeFast() {
     if (!state || !state.fast) return;
-    const want = fastSlotCount();
+    const qs = (state.questions && state.questions.fast) || [];
+    const want = Math.min(12, qs.reduce((m, q) => Math.max(m, (q.answers || []).length), FAST_SLOTS));
     ['p1', 'p2'].forEach((k) => {
       if (!Array.isArray(state.fast[k])) state.fast[k] = [];
       while (state.fast[k].length < want) state.fast[k].push({ answer: '', points: 0, revealed: false });
