@@ -71,7 +71,7 @@
 .fm-row .idx { font-family: var(--font-display); color:var(--c-accent); text-align:center; }
 .fm-row input.answer { font-family: var(--font-cond); font-weight:600; }
 .fm-suggest { position: relative; }
-.fm-suggest-list { position:absolute; top:100%; left:0; right:0; z-index:20; background:#0b1436; border:1px solid rgba(255,255,255,.2); border-radius:8px; max-height:180px; overflow:auto; box-shadow:0 12px 30px rgba(0,0,0,.6); }
+.fm-suggest-list { position:absolute; top:100%; left:0; right:0; z-index:20; background:#0b1436; border:1px solid rgba(255,255,255,.2); border-radius:8px; max-height:280px; overflow:auto; box-shadow:0 12px 30px rgba(0,0,0,.6); }
 .fm-suggest-list div { padding:8px 10px; cursor:pointer; display:flex; justify-content:space-between; }
 .fm-suggest-list div:hover { background: rgba(255,255,255,.1); }
 .fm-timer-row { display:flex; gap:8px; align-items:center; margin: 12px 0; flex-wrap:wrap; }
