@@ -46,7 +46,7 @@
       pod0.classList.toggle('active', s.main.activeTeam === 0 && s.boardMode === 'main');
     }
     if (s.boardMode === 'fast' || s.boardMode === 'fast-title') {
-      document.getElementById('t1name').textContent = 'FAST MONEY';
+      document.getElementById('t1name').textContent = s.theme.fastName || 'FAST MONEY ROUND';
       document.getElementById('t1score').textContent = 'P' + (s.fast.playerView === 2 ? 2 : 1);
       pod1.classList.remove('active');
     } else if (s.boardMode === 'jeopardy') {
@@ -98,7 +98,7 @@
     const plate = document.querySelector('.board-brand .plate-title');
     const isFm = s.boardMode === 'fast' || s.boardMode === 'fast-title';
     if (plate) plate.textContent = isJp ? 'TBROI JEOPARDY!'
-      : isFm ? 'FAST MONEY ROUND'
+      : isFm ? (s.theme.fastName || 'FAST MONEY ROUND')
       : (s.boardMode === 'logo' ? '' : (s.theme.title || 'FAMILY FEUD'));
   }
 
@@ -213,7 +213,7 @@
   // the title in, then it HOLDS until the host explicitly shows the board.
   function renderFastTitle(s) {
     const cdFresh = s.fast.countdownId && s.fast.countdownId !== prev.fmCdId;
-    const key = 'fmt|' + (s.fast.countdownId || 0);
+    const key = 'fmt|' + (s.fast.countdownId || 0) + '|' + (s.theme.fastName || '') + '|' + (s.theme.title || '');
     if (prev.boardMode !== 'fast-title' || prev.fmtKey !== key) {
       if (cdFresh) {
         prev.fmCdId = s.fast.countdownId;
@@ -239,7 +239,7 @@
       <div class="jp-cd fm-cd">
         <div class="intro-rays"></div>
         ${withCountdown ? '<div class="intro-count"><span>3</span><span>2</span><span>1</span></div>' : ''}
-        <div class="fm-cd-kicker ${withCountdown ? '' : 'now'}">💰 FAST MONEY ROUND 💰</div>
+        <div class="fm-cd-kicker ${withCountdown ? '' : 'now'}">💰 ${escapeHtml(s.theme.fastName || 'FAST MONEY ROUND')} 💰</div>
         <div class="jp-cd-title ${withCountdown ? '' : 'now'}">${escapeHtml(first)} <span>${escapeHtml(last)}</span></div>
         <div class="jp-cd-sub ${withCountdown ? '' : 'now'}">TWO PLAYERS · BEAT THE CLOCK · 200 TO WIN</div>
       </div>`;
