@@ -170,10 +170,12 @@
       merged.questions.jeopardy.final = clone(global.FF_DEFAULT_QUESTIONS.jeopardy.final);
     }
     if (!Array.isArray(merged.main.revealed)) merged.main.revealed = [];
-    // Pad older saves' fast-money slots up to the current count (5 -> 8).
+    // Pad fast-money slots to one per speed-round question (older saves may
+    // carry fewer slots than questions).
+    const fastWant = Math.min(12, Math.max(FAST_SLOTS, ((merged.questions || {}).fast || []).length));
     ['p1', 'p2'].forEach((k) => {
       if (!Array.isArray(merged.fast[k])) merged.fast[k] = [];
-      while (merged.fast[k].length < FAST_SLOTS) {
+      while (merged.fast[k].length < fastWant) {
         merged.fast[k].push({ answer: '', points: 0, revealed: false });
       }
     });
@@ -237,8 +239,26 @@
   });
 
   // ---- Public API -----------------------------------------------------------
+  // Fast Money has one answer slot per speed-round question (capped at 12
+  // for board legibility). Keep the per-player slot arrays padded to match,
+  // so adding questions in the editor grows the round everywhere.
+  function fastSlotCount() {
+    const qs = (state.questions && state.questions.fast) || [];
+    return Math.min(12, Math.max(1, qs.length || FAST_SLOTS));
+  }
+  function normalizeFast() {
+    if (!state || !state.fast) return;
+    const want = fastSlotCount();
+    ['p1', 'p2'].forEach((k) => {
+      if (!Array.isArray(state.fast[k])) state.fast[k] = [];
+      while (state.fast[k].length < want) state.fast[k].push({ answer: '', points: 0, revealed: false });
+    });
+  }
+
   const Store = {
     get() { return state; },
+
+    fastSlots: fastSlotCount,
 
     // Merge a shallow patch object into state (deep for known nested keys),
     // bump revision, persist, broadcast, and notify local listeners.
@@ -248,6 +268,7 @@
       } else if (mutator && typeof mutator === 'object') {
         deepMerge(state, mutator);
       }
+      normalizeFast();
       state._rev = (state._rev || 0) + 1;
       broadcast();
       emit();

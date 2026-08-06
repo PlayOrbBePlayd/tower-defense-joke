@@ -350,7 +350,7 @@
     renderFast();
   }
 
-  function fmData() { return fmPlayer === 2 ? S().fast.p2 : S().fast.p1; }
+  function fmData() { return (fmPlayer === 2 ? S().fast.p2 : S().fast.p1).slice(0, Store.fastSlots()); }
 
   // Speed-round question navigation — the board shows the selected question.
   function setFastQ(i) {
@@ -844,6 +844,10 @@
   Store.subscribe(() => {
     renderMain(); renderStrikeDots(); $('fmTotal').textContent = fastTotal(); updateEventUI();
     updateIntroBtn();
+    // Rebuild the Fast Money rows only when the slot count changes (e.g. the
+    // editor added speed-round questions) — a full re-render on every patch
+    // would steal focus from the answer inputs mid-typing.
+    if (document.querySelectorAll('#fmRows .fm-row').length !== Store.fastSlots()) renderFast();
     if (!$('jeopPanel').classList.contains('hidden')) renderJpGrid();
     const cn = $('ctlClientName');
     if (cn && document.activeElement !== cn) cn.value = S().clientName || '';

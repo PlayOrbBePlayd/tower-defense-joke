@@ -758,11 +758,12 @@
   /* ---------------- FAST MONEY ---------------- */
   function renderFast(s) {
     const f = s.fast;
-    const pl = f.playerView === 2 ? f.p2 : f.p1;
+    const n = Store.fastSlots();
+    const pl = (f.playerView === 2 ? f.p2 : f.p1).slice(0, n);
     const key = JSON.stringify(pl.map((x) => [x.answer, x.points, x.revealed]))
       + '|' + f.playerView + '|' + f.showTotals + '|' + fastTotal(s) + '|' + f.timerLabel;
 
-    const struct = f.playerView + '|' + f.timerLabel + '|' + (f.questionIndex || 0);
+    const struct = f.playerView + '|' + f.timerLabel + '|' + (f.questionIndex || 0) + '|' + n;
     if (prev.boardMode !== 'fast' || prev.fastStruct !== struct) {
       stage.innerHTML = fastHtml(s);
       prev.boardMode = 'fast';
@@ -816,7 +817,7 @@
   function fastHtml(s) {
     const f = s.fast;
     const fq = s.questions.fast[f.questionIndex || 0];
-    const rows = Array.from({ length: 8 }, (_, i) => `
+    const rows = Array.from({ length: Store.fastSlots() }, (_, i) => `
       <div class="fast-row" data-i="${i}">
         <span class="fa-num">${i + 1}</span>
         <span class="fa-ans"></span>
