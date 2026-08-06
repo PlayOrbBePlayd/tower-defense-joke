@@ -408,7 +408,7 @@
     const box = document.querySelector(`[data-list="${i}"]`);
     if (!box) return;
     const v = (val || '').toLowerCase();
-    const matches = pool.filter((a) => a.text.toLowerCase().includes(v)).slice(0, 6);
+    const matches = pool.filter((a) => a.text.toLowerCase().includes(v)).slice(0, 12);
     if (!matches.length) { box.classList.add('hidden'); return; }
     box.innerHTML = matches.map((a) => `<div data-t="${escAttr(a.text)}" data-p="${a.points}"><span>${escHtml(a.text)}</span><b>${a.points}</b></div>`).join('');
     box.classList.remove('hidden');
