@@ -21,10 +21,12 @@
     const J = q.jeopardy || { categories: [] };
     const per = J.categories.length ? Math.max(...J.categories.map((c) => c.clues.length)) : 0;
     $('tabs').querySelector('[data-t="jeopardy"]').textContent = `Jeopardy (${J.categories.length}×${per})`;
+    $('tabs').querySelector('[data-t="wheel"]').textContent = `Wheel (${(q.wheel || []).length})`;
 
     // The Jeopardy bank has its own structure & renderer.
     $('addQ').classList.toggle('hidden', tab === 'jeopardy');
     if (tab === 'jeopardy') { renderJeopardyEditor(); return; }
+    if (tab === 'wheel') { renderWheelEditor(); return; }
 
     const list = $('list');
     const qs = bank();
@@ -188,6 +190,40 @@
       if (el.tagName === 'SELECT') el.oninput = null;   // avoid double-fire on selects
     });
     bindImgButtons();
+  }
+
+  /* ---- Wheel of Fortune puzzles: category + phrase per card ---- */
+  function renderWheelEditor() {
+    const qs = S().questions.wheel || [];
+    $('list').innerHTML = qs.map((p, i) => `
+      <div class="panel q-card">
+        <div class="q-top">
+          <span class="qnum">${i + 1}</span>
+          <input type="text" style="max-width:220px" data-wh="cat:${i}" value="${escAttr(p.category || '')}" placeholder="Category (e.g. PHRASE)" />
+          <input type="text" class="qtext" data-wh="phrase:${i}" value="${escAttr(p.phrase || '')}" placeholder="THE PUZZLE PHRASE" />
+          <button class="btn red sm" data-whdel="${i}" title="Delete puzzle">✕</button>
+        </div>
+        <div class="sum">Letters A–Z become tiles; spaces split words; punctuation shows automatically. Phrases display in CAPITALS.</div>
+      </div>`).join('') || '<p class="sum">No puzzles yet. Click “Add Question”.</p>';
+    $('list').querySelectorAll('[data-wh]').forEach((el) => {
+      el.oninput = () => {
+        const [kind, i] = el.dataset.wh.split(':');
+        Store.patch((s) => {
+          const p = s.questions.wheel[+i]; if (!p) return;
+          if (kind === 'cat') p.category = el.value.toUpperCase();
+          else p.phrase = el.value.toUpperCase();
+        });
+      };
+    });
+    $('list').querySelectorAll('[data-whdel]').forEach((b) => {
+      b.onclick = () => {
+        Store.patch((s) => {
+          s.questions.wheel.splice(+b.dataset.whdel, 1);
+          if (s.wheel.puzzleIndex >= s.questions.wheel.length) s.wheel.puzzleIndex = Math.max(0, s.questions.wheel.length - 1);
+        });
+        render(); toast('Puzzle deleted');
+      };
+    });
   }
 
   function updateDdCount() {
@@ -374,8 +410,15 @@
   }
 
   $('addQ').onclick = () => {
-    Store.patch((s) => { s.questions[tab].push({ q: 'New question…', answers: [{ text: '', points: 0 }, { text: '', points: 0 }, { text: '', points: 0 }] }); });
-    render(); toast('Question added');
+    Store.patch((s) => {
+      if (tab === 'wheel') {
+        if (!Array.isArray(s.questions.wheel)) s.questions.wheel = [];
+        s.questions.wheel.push({ category: 'PHRASE', phrase: '' });
+      } else {
+        s.questions[tab].push({ q: 'New question…', answers: [{ text: '', points: 0 }, { text: '', points: 0 }, { text: '', points: 0 }] });
+      }
+    });
+    render(); toast(tab === 'wheel' ? 'Puzzle added' : 'Question added');
     window.scrollTo(0, document.body.scrollHeight);
   };
 

@@ -187,3 +187,12 @@
   border:1px solid rgba(255,255,255,.14); border-radius:18px; padding:24px; box-shadow:0 30px 80px rgba(0,0,0,.6); }
 .modal h2 { font-family:var(--font-cond); font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--c-accent); font-size:22px; margin-bottom:10px; }
 .modal .hint { color:#9fb0e6; font-size:13px; line-height:1.5; }
+
+/* Wheel of Fortune letter keyboard */
+.wh-kb { display: grid; grid-template-columns: repeat(9, 1fr); gap: 8px; }
+.wh-kb button { font-family: var(--font-cond); font-weight: 700; font-size: 18px;
+  padding: 10px 0; border-radius: 10px; border: 1px solid rgba(255,255,255,.2);
+  background: linear-gradient(180deg, var(--c-primary-lt), var(--c-primary-dk));
+  color: #fff; cursor: pointer; }
+.wh-kb button.vowel { background: linear-gradient(180deg, var(--c-accent), var(--c-accent-dk)); color: #3a2500; }
+.wh-kb button:disabled { opacity: .25; cursor: not-allowed; text-decoration: line-through; }

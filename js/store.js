@@ -45,6 +45,16 @@
     // — e.g. a prize reveal after the countdown, a giveaway after the outro.
     slides: { s1: '', s2: '' },
 
+    // ---- Wheel of Fortune bonus game ----
+    wheel: {
+      puzzleIndex: 0,
+      called: [],              // letters already called (uppercase)
+      solved: false,
+      spinId: 0,               // bump to animate a spin on the board
+      spinResult: null,        // {label, value|null, wedge} of the last spin
+      countdownId: 0,          // bump to play the wheel countdown
+    },
+
     teams: [
       { name: 'TEAM 1', score: 0 },
       { name: 'TEAM 2', score: 0 },
@@ -157,6 +167,13 @@
     merged.event = Object.assign({}, base.event, s.event || {});
     merged.jeop = Object.assign({}, base.jeop, s.jeop || {});
     merged.slides = Object.assign({}, base.slides, s.slides || {});
+    merged.wheel = Object.assign({}, base.wheel, s.wheel || {});
+    if (!Array.isArray(merged.wheel.called)) merged.wheel.called = [];
+    // Older saves predate the Wheel bank — seed it from defaults.
+    if (!Array.isArray(merged.questions.wheel) || !merged.questions.wheel.length) {
+      merged.questions.wheel = global.FF_DEFAULT_QUESTIONS && global.FF_DEFAULT_QUESTIONS.wheel
+        ? clone(global.FF_DEFAULT_QUESTIONS.wheel) : [];
+    }
     merged.teams = s.teams && s.teams.length ? s.teams : base.teams;
     if (!s.questions || !s.questions.main || !s.questions.main.length) {
       merged.questions = global.FF_DEFAULT_QUESTIONS

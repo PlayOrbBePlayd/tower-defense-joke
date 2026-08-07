@@ -45,7 +45,11 @@
       document.getElementById('t0score').textContent = s.teams[0].score;
       pod0.classList.toggle('active', s.main.activeTeam === 0 && s.boardMode === 'main');
     }
-    if (s.boardMode === 'fast' || s.boardMode === 'fast-title') {
+    if (s.boardMode === 'wheel' || s.boardMode === 'wheel-title') {
+      document.getElementById('t1name').textContent = 'PUZZLE';
+      document.getElementById('t1score').textContent = (s.wheel.puzzleIndex + 1) + '/' + ((s.questions.wheel || []).length || 1);
+      pod1.classList.remove('active');
+    } else if (s.boardMode === 'fast' || s.boardMode === 'fast-title') {
       document.getElementById('t1name').textContent = s.theme.fastName || 'FAST MONEY ROUND';
       document.getElementById('t1score').textContent = 'P' + (s.fast.playerView === 2 ? 2 : 1);
       pod1.classList.remove('active');
@@ -79,6 +83,8 @@
     else if (s.boardMode === 'jeopardy-title') renderJeopardyTitle(s);
     else if (s.boardMode === 'feud-title') renderFeudTitle(s);
     else if (s.boardMode === 'fast-title') renderFastTitle(s);
+    else if (s.boardMode === 'wheel') renderWheel(s);
+    else if (s.boardMode === 'wheel-title') renderWheelTitle(s);
     else if (s.boardMode === 'main') renderMain(s);
     else if (s.boardMode === 'fast') renderFast(s);
     else if (s.boardMode === 'leaderboard') renderLeaderboard(s);
@@ -98,8 +104,10 @@
     pod1.style.visibility = isJp ? 'hidden' : '';
     const plate = document.querySelector('.board-brand .plate-title');
     const isFm = s.boardMode === 'fast' || s.boardMode === 'fast-title';
+    const isWh = s.boardMode === 'wheel' || s.boardMode === 'wheel-title';
     if (plate) plate.textContent = isJp ? 'TBROI JEOPARDY!'
       : isFm ? (s.theme.fastName || 'FAST MONEY ROUND')
+      : isWh ? 'WHEEL OF FORTUNE'
       : (s.boardMode === 'logo' ? '' : (s.theme.title || 'FAMILY FEUD'));
   }
 
@@ -259,6 +267,144 @@
         <div class="jp-cd-title ${withCountdown ? '' : 'now'}">${escapeHtml(first)} <span>${escapeHtml(last)}</span></div>
         <div class="jp-cd-sub ${withCountdown ? '' : 'now'}">TWO PLAYERS · BEAT THE CLOCK · 200 TO WIN</div>
       </div>`;
+  }
+
+  /* ---------------- WHEEL OF FORTUNE (bonus game) ---------------- */
+  // Title page with the same slam-and-hold treatment as the other games.
+  function renderWheelTitle(s) {
+    const cdFresh = s.wheel.countdownId && s.wheel.countdownId !== prev.whCdId;
+    const key = 'wht|' + (s.wheel.countdownId || 0);
+    if (prev.boardMode !== 'wheel-title' || prev.whtKey !== key) {
+      if (cdFresh) {
+        prev.whCdId = s.wheel.countdownId;
+        stage.innerHTML = whTitleHtml(true);
+        const cue = (ms, fn) => setTimeout(() => { if (Store.get().boardMode === 'wheel-title') fn(); }, ms);
+        Sound.flip(); cue(1000, () => Sound.flip()); cue(2000, () => Sound.flip());
+        cue(3000, () => Sound.fanfare());
+      } else {
+        stage.innerHTML = whTitleHtml(false);
+        if (prev.boardMode && prev.boardMode !== 'wheel-title') Sound.ding();
+      }
+      prev.boardMode = 'wheel-title';
+      prev.whtKey = key;
+    }
+    Theme.apply();
+  }
+  function whTitleHtml(withCountdown) {
+    return `
+      <div class="jp-cd wh-cd">
+        <div class="intro-rays"></div>
+        ${withCountdown ? '<div class="intro-count"><span>3</span><span>2</span><span>1</span></div>' : ''}
+        <div class="fm-cd-kicker ${withCountdown ? '' : 'now'}">🎡 BONUS GAME 🎡</div>
+        <div class="jp-cd-title ${withCountdown ? '' : 'now'}">WHEEL OF <span>FORTUNE</span></div>
+        <div class="jp-cd-sub ${withCountdown ? '' : 'now'}">SPIN · CALL A LETTER · SOLVE THE PUZZLE</div>
+      </div>`;
+  }
+
+  // The puzzle board: hidden letter tiles flip open as the host calls letters.
+  let whSpinTimer = null;
+  function renderWheel(s) {
+    const puz = (s.questions.wheel || [])[s.wheel.puzzleIndex];
+    if (!puz) {
+      if (prev.boardMode !== 'wheel') { stage.innerHTML = '<div class="jp-empty">No wheel puzzles yet — add some in the Editor → Wheel tab.</div>'; prev.boardMode = 'wheel'; }
+      Theme.apply(); return;
+    }
+    const structKey = 'wof|' + s.wheel.puzzleIndex + '|' + puz.phrase + '|' + (puz.category || '');
+    if (prev.boardMode !== 'wheel' || prev.wofKey !== structKey) {
+      const words = String(puz.phrase || '').toUpperCase().split(/\s+/).filter(Boolean).map((w) => {
+        const tiles = [...w].map((ch) => /[A-Z]/.test(ch)
+          ? `<span class="wof-tile" data-ch="${ch}"><b>${ch}</b></span>`
+          : `<span class="wof-tile punc shown"><b>${escapeHtml(ch)}</b></span>`).join('');
+        return `<span class="wof-word">${tiles}</span>`;
+      }).join('');
+      stage.innerHTML = `
+        <div class="wof-root">
+          <div class="wof-cat">${escapeHtml(puz.category || 'PUZZLE')}</div>
+          <div class="wof-board">${words}</div>
+          <div class="wof-called"></div>
+          <div class="wof-spin-chip hidden"></div>
+        </div>`;
+      prev.boardMode = 'wheel';
+      prev.wofKey = structKey;
+      prev.wofShown = -1;
+      prev.wofSolved = false;
+      if (prev.boardMode) Sound.flip();
+    }
+
+    // Reveal tiles for called letters (flip newly-revealed ones with a ding).
+    const called = s.wheel.called || [];
+    const solved = !!s.wheel.solved;
+    let newly = 0;
+    stage.querySelectorAll('.wof-tile[data-ch]').forEach((t) => {
+      const show = solved || called.includes(t.dataset.ch);
+      if (show && !t.classList.contains('shown')) { t.classList.add('shown', 'pop'); newly++; setTimeout(() => t.classList.remove('pop'), 700); }
+      else if (!show) t.classList.remove('shown');
+    });
+    if (newly && prev.wofShown >= 0) Sound.reveal();
+    prev.wofShown = stage.querySelectorAll('.wof-tile.shown').length;
+    if (solved && !prev.wofSolved) {
+      const t = Store.get().theme;
+      Confetti.fire(confettiCanvas, { colors: [t.accent, t.primary, '#ffffff', '#3ce88a'], count: 160 });
+      Sound.fanfare();
+    }
+    prev.wofSolved = solved;
+
+    // Called-letters strip
+    const strip = stage.querySelector('.wof-called');
+    if (strip) strip.innerHTML = called.length
+      ? 'CALLED: ' + called.map((L) => `<b>${L}</b>`).join(' ') : 'NO LETTERS CALLED YET';
+
+    // Last-spin chip
+    const chip = stage.querySelector('.wof-spin-chip');
+    if (chip) {
+      const r = s.wheel.spinResult;
+      chip.classList.toggle('hidden', !r || (s.wheel.spinId === prev.whSpinPlaying));
+      if (r) { chip.textContent = r.v == null ? '☠ ' + r.label : '🎡 ' + r.label; chip.classList.toggle('hazard', r.v == null); }
+    }
+
+    // Spin animation overlay (one-shot per spinId)
+    if (s.wheel.spinId && s.wheel.spinId !== prev.whSpinId) {
+      prev.whSpinId = s.wheel.spinId;
+      prev.whSpinPlaying = s.wheel.spinId;
+      playWheelSpin(s.wheel.spinResult);
+    }
+    Theme.apply();
+  }
+
+  function playWheelSpin(result) {
+    const W = window.FF_WHEEL_WEDGES || [];
+    if (!W.length || !result) return;
+    document.querySelectorAll('.wof-spin-layer').forEach((el) => el.remove());
+    clearTimeout(whSpinTimer);
+    const n = W.length, seg = 360 / n;
+    const grad = W.map((w, i) => `${w.c} ${(i * seg).toFixed(2)}deg ${((i + 1) * seg).toFixed(2)}deg`).join(', ');
+    const labels = W.map((w, i) => `
+      <span class="wof-wedge-label" style="transform: rotate(${(i * seg + seg / 2).toFixed(1)}deg)">
+        <i style="${w.c === '#ffd75e' || w.c === '#95c11c' ? 'color:#14161f;text-shadow:none' : ''}">${w.label}</i></span>`).join('');
+    const layer = document.createElement('div');
+    layer.className = 'wof-spin-layer';
+    layer.innerHTML = `
+      <div class="wof-pointer">▼</div>
+      <div class="wof-disc" style="background: conic-gradient(${grad})">${labels}</div>
+      <div class="wof-result"></div>`;
+    document.body.appendChild(layer);
+    Sound.flip();
+    // Land the chosen wedge under the pointer after several full turns.
+    const target = 5 * 360 + (360 - (result.wedge * seg + seg / 2));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      layer.querySelector('.wof-disc').style.transform = `rotate(${target}deg)`;
+    }));
+    whSpinTimer = setTimeout(() => {
+      const res = layer.querySelector('.wof-result');
+      res.textContent = result.label;
+      res.classList.add('show', result.v == null ? 'hazard' : 'win');
+      if (result.v == null) Sound.strike(); else Sound.fanfare();
+      whSpinTimer = setTimeout(() => {
+        layer.remove();
+        prev.whSpinPlaying = null;
+        if (Store.get().boardMode === 'wheel') render();
+      }, 2100);
+    }, 3400);
   }
 
   /* ---------------- INTRO REVEAL (show open) ---------------- */

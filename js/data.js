@@ -242,4 +242,34 @@ window.FF_DEFAULT_QUESTIONS = {
       ],
     },
   ],
+
+  // ---- Wheel of Fortune bonus game: customizable puzzles ----
+  wheel: [
+    { category: 'PHRASE', phrase: 'TEAMWORK MAKES THE DREAM WORK' },
+    { category: 'EVENT', phrase: 'QUARTERLY BUSINESS REVIEW' },
+    { category: 'THING', phrase: 'ICE BREAKER ACTIVITY' },
+    { category: 'PHRASE', phrase: 'THINK OUTSIDE THE BOX' },
+    { category: 'AROUND THE OFFICE', phrase: 'RELUCTANT RETURN TO OFFICE' },
+    { category: 'PHRASE', phrase: 'LET US CIRCLE BACK ON THAT' },
+    { category: 'OCCASION', phrase: 'COMPANY HOLIDAY PARTY' },
+    { category: 'THING', phrase: 'END OF YEAR BONUS' },
+    { category: 'PHRASE', phrase: 'YOU ARE STILL ON MUTE' },
+    { category: 'PLACE', phrase: 'CORPORATE TEAM BUILDING RETREAT' },
+  ],
 };
+
+// Wheel wedges: label, point value (null = hazard), wedge color.
+window.FF_WHEEL_WEDGES = [
+  { label: '500', v: 500, c: '#e23b3b' },
+  { label: 'BANKRUPT', v: null, c: '#14161f' },
+  { label: '650', v: 650, c: '#2f7de1' },
+  { label: '700', v: 700, c: '#f0a11c' },
+  { label: '600', v: 600, c: '#7d3fe1' },
+  { label: '800', v: 800, c: '#2fb56b' },
+  { label: 'LOSE A TURN', v: null, c: '#8a8f9c' },
+  { label: '650', v: 650, c: '#e2703b' },
+  { label: '550', v: 550, c: '#3bc4e2' },
+  { label: '900', v: 900, c: '#d13be2' },
+  { label: '600', v: 600, c: '#95c11c' },
+  { label: '2500', v: 2500, c: '#ffd75e' },
+];
