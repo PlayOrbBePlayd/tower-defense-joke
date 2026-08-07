@@ -754,3 +754,60 @@
   .board-head { grid-template-columns: 1fr; gap: 10px; }
   .score-pod, .score-pod.right { justify-content: center; }
 }
+
+/* ==================== WHEEL OF FORTUNE (bonus game) ==================== */
+.wh-cd { background: radial-gradient(1300px 900px at 50% 32%, #7a3f9b -30%, #120a29 78%); }
+
+.wof-root { flex: 1; min-height: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: clamp(16px, 3.4vh, 40px); padding: 0 3vw; }
+.wof-cat { font-family: var(--font-cond); font-weight: 700; text-transform: uppercase;
+  letter-spacing: .34em; color: var(--c-accent); font-size: clamp(18px, 2.6vw, 40px);
+  background: rgba(0,0,0,.35); border: 2px solid rgba(255,255,255,.18); border-radius: 999px;
+  padding: 10px 34px; animation: popIn .5s cubic-bezier(.2,1.6,.4,1) both; }
+.wof-board { display: flex; flex-wrap: wrap; justify-content: center;
+  gap: clamp(10px, 1.6vw, 26px) clamp(18px, 3vw, 48px); max-width: 94vw; }
+.wof-word { display: flex; gap: clamp(4px, .6vw, 10px); }
+.wof-tile { width: clamp(34px, 4.6vw, 76px); height: clamp(46px, 6.4vw, 104px);
+  border-radius: 8px; display: grid; place-items: center; position: relative;
+  background: linear-gradient(180deg, var(--c-primary-lt), var(--c-primary-dk));
+  border: 2px solid rgba(255,255,255,.35); box-shadow: 0 8px 22px rgba(0,0,0,.45);
+  perspective: 600px; }
+.wof-tile b { font-family: var(--font-display); font-size: clamp(26px, 3.6vw, 62px);
+  color: #0a1638; opacity: 0; transform: rotateY(90deg); transition: transform .45s, opacity .45s; }
+.wof-tile.shown { background: linear-gradient(180deg, #ffffff, #cdd8ff); }
+.wof-tile.shown b { opacity: 1; transform: rotateY(0); }
+.wof-tile.punc { background: transparent; border-color: transparent; box-shadow: none; }
+.wof-tile.punc b { color: #fff; opacity: 1; transform: none; }
+.wof-tile.pop { animation: jpPop .5s cubic-bezier(.2,1.4,.4,1); }
+.wof-called { font-family: var(--font-cond); font-weight: 700; letter-spacing: .2em;
+  color: #9fb0e6; font-size: clamp(13px, 1.6vw, 22px); text-transform: uppercase; }
+.wof-called b { color: var(--c-accent); margin: 0 2px; }
+.wof-spin-chip { position: absolute; top: clamp(90px, 14vh, 150px); right: clamp(14px, 2.2vw, 40px);
+  font-family: var(--font-display); font-size: clamp(20px, 2.6vw, 40px);
+  background: linear-gradient(180deg, var(--c-accent), var(--c-accent-dk)); color: #3a2500;
+  border-radius: 14px; padding: 8px 20px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+.wof-spin-chip.hazard { background: linear-gradient(180deg, #3a3f4d, #14161f); color: #fff; }
+
+/* Spin overlay — a big wheel spins in the middle of the screen */
+.wof-spin-layer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 85;
+  background: rgba(3, 6, 24, .88); display: grid; place-items: center;
+  animation: jpClueIn .3s ease; }
+.wof-pointer { position: absolute; top: calc(50% - min(46vh, 46vw) / 2 - 3.2vh); left: 50%;
+  transform: translateX(-50%); font-size: clamp(30px, 5vh, 56px); color: var(--c-accent);
+  text-shadow: 0 4px 0 var(--c-accent-dk), 0 8px 20px rgba(0,0,0,.6); z-index: 3; }
+.wof-disc { width: min(46vh, 46vw); height: min(46vh, 46vw); border-radius: 50%;
+  border: 10px solid #fff; box-shadow: 0 0 0 6px rgba(0,0,0,.35), 0 30px 80px rgba(0,0,0,.7),
+  inset 0 0 60px rgba(0,0,0,.35); position: relative;
+  transition: transform 3.2s cubic-bezier(.12, .82, .16, 1); will-change: transform; }
+.wof-wedge-label { position: absolute; inset: 0; display: flex; justify-content: center; z-index: 2;
+  pointer-events: none; }
+.wof-wedge-label i { font-style: normal; font-family: var(--font-cond); font-weight: 700;
+  margin-top: clamp(10px, 2.4vh, 26px); font-size: clamp(11px, 1.8vh, 20px); letter-spacing: .04em;
+  color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,.7); max-width: 74px; text-align: center;
+  writing-mode: vertical-rl; text-orientation: mixed; height: clamp(60px, 12vh, 130px); }
+.wof-result { position: absolute; z-index: 4; font-family: var(--font-display);
+  font-size: clamp(50px, 10vw, 160px); color: var(--c-accent);
+  text-shadow: 0 6px 0 var(--c-accent-dk), 0 0 44px var(--c-primary-glow), 0 12px 30px rgba(0,0,0,.7);
+  opacity: 0; pointer-events: none; }
+.wof-result.show { animation: slamBounce .7s cubic-bezier(.2,1.1,.35,1) forwards, titleThrob 1.2s ease-in-out .8s infinite; }
+.wof-result.hazard { color: #ff6b6b; text-shadow: 0 6px 0 #7a1414, 0 0 44px rgba(255,60,60,.5); }

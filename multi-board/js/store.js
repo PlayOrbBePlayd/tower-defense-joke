@@ -14,7 +14,7 @@
 (function (global) {
   'use strict';
 
-  const LS_KEY = 'gsr_multi_v1';
+  const LS_KEY = 'gsr_multi_v2';
   const CHANNEL = 'gsr-multi-live';
   // 8 fast-money answer slots per player — one per speed-round question category.
   const FAST_SLOTS = 8;
@@ -44,6 +44,16 @@
     // Two host-uploaded event slides (data URLs) shown full-screen on demand
     // — e.g. a prize reveal after the countdown, a giveaway after the outro.
     slides: { s1: '', s2: '' },
+
+    // ---- Wheel of Fortune bonus game ----
+    wheel: {
+      puzzleIndex: 0,
+      called: [],              // letters already called (uppercase)
+      solved: false,
+      spinId: 0,               // bump to animate a spin on the board
+      spinResult: null,        // {label, value|null, wedge} of the last spin
+      countdownId: 0,          // bump to play the wheel countdown
+    },
 
     teams: [
       { name: 'TEAM 1', score: 0 },
@@ -108,7 +118,7 @@
     // ---- Which mode the BOARD is currently showing ----
     boardMode: 'logo',         // 'logo' | 'main' | 'fast'
 
-    // ---- Multi-board: 5 Jeopardy + 5 Family Feud boards ----
+    // ---- Multi-board: 15 Jeopardy + 5 Family Feud boards ----
     // questions.jeopardy / questions.main always hold the ACTIVE board;
     // the banks keep every board (edits are saved back on switch).
     banks: global.FF_BANKS ? JSON.parse(JSON.stringify(global.FF_BANKS)) : { jeop: [], feud: [] },
@@ -167,6 +177,13 @@
       merged.banks = global.FF_BANKS ? clone(global.FF_BANKS) : { jeop: [], feud: [] };
     }
     merged.activeBoards = Object.assign({ jeop: 0, feud: 0 }, s.activeBoards || {});
+    merged.wheel = Object.assign({}, base.wheel, s.wheel || {});
+    if (!Array.isArray(merged.wheel.called)) merged.wheel.called = [];
+    // Older saves predate the Wheel bank — seed it from defaults.
+    if (!Array.isArray(merged.questions.wheel) || !merged.questions.wheel.length) {
+      merged.questions.wheel = global.FF_DEFAULT_QUESTIONS && global.FF_DEFAULT_QUESTIONS.wheel
+        ? clone(global.FF_DEFAULT_QUESTIONS.wheel) : [];
+    }
     merged.teams = s.teams && s.teams.length ? s.teams : base.teams;
     if (!s.questions || !s.questions.main || !s.questions.main.length) {
       merged.questions = global.FF_DEFAULT_QUESTIONS

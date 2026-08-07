@@ -21,8 +21,10 @@
   });
   function switchPanel(mode) {
     $('modeTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
-    const isEvent = mode === 'event', isJeop = mode === 'jeopardy';
-    $('mainPanel').classList.toggle('hidden', isEvent || isJeop);
+    const isFast = mode === 'fast', isEvent = mode === 'event', isJeop = mode === 'jeopardy', isWheel = mode === 'wheel';
+    $('mainPanel').classList.toggle('hidden', isFast || isEvent || isJeop || isWheel);
+    $('fastPanel').classList.toggle('hidden', !isFast);
+    $('wheelPanel').classList.toggle('hidden', !isWheel);
     $('eventPanel').classList.toggle('hidden', !isEvent);
     $('jeopPanel').classList.toggle('hidden', !isJeop);
     if (isJeop) renderJpGrid();
@@ -36,6 +38,12 @@
       let bm = isEvent ? 'leaderboard' : mode;
       if (mode === 'main' && (!s.event.faceoff || s.event.faceoff.control == null)) bm = 'feud-title';
       if (mode === 'jeopardy' && !s.jeop.active && !(s.jeop.final && s.jeop.final.stage)) bm = 'jeopardy-title';
+      if (mode === 'fast') {
+        const live = s.fast.p1.some((a) => a.revealed) || s.fast.p2.some((a) => a.revealed)
+          || s.fast.showTotals || s.fast.timerRunning;
+        if (!live) bm = 'fast-title';
+      }
+      if (mode === 'wheel' && !(s.wheel.called || []).length && !s.wheel.solved) bm = 'wheel-title';
       s.boardMode = bm;
     });
     if (isEvent) buildRoster();
@@ -73,6 +81,7 @@
   $('toLogo').onclick = () => { Store.patch((s) => { s.boardMode = 'logo'; }); syncTabs(); };
   $('toJeopardy').onclick = () => switchPanel('jeopardy');
   $('toMain').onclick = () => { Store.patch((s) => { s.boardMode = 'main'; }); switchPanel('main'); };
+  $('toFast').onclick = () => { Store.patch((s) => { s.boardMode = 'fast'; }); switchPanel('fast'); };
   $('celebrate').onclick = () => { Store.fx('confetti'); toast('🎊 Celebration!'); };
   $('fxSmoke').onclick = () => { Store.fx('smoke'); toast('💨 Smoke machine!'); };
   $('fxLasers').onclick = () => { Store.fx('lasers'); toast('⚡ Laser show!'); };
@@ -314,7 +323,274 @@
     toast('New round ready');
   };
 
-  /* ---------------- BOARD PICKERS (5 Jeopardy + 5 Feud boards) ---------- */
+  /* ---------------- FAST MONEY ---------------- */
+  // The round's display name is customizable (Branding & Theme → Fast Money
+  // round name) and flows into the tab, panel, buttons, board and title page.
+  function fmName() { return S().theme.fastName || 'FAST MONEY ROUND'; }
+  function applyFmName() {
+    const n = fmName();
+    const tab = $('modeTabs').querySelector('[data-mode="fast"]');
+    if (tab) tab.textContent = n;
+    const h2 = document.querySelector('#fastPanel h2');
+    if (h2) h2.textContent = n + ' — Final Round';
+    $('toFast').textContent = '💰 Show ' + n;
+    $('fmShowBoard').textContent = '▶ Show ' + n;
+    $('fmResetRound').textContent = '↺ Reset ' + n;
+  }
+  applyFmName();
+
+  // Title page / countdown / board — same show-open flow as Jeopardy. The
+  // countdown slams the title and HOLDS until the host shows the board.
+  $('fmTitleBtn').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'fast-title'; });
+    toast('🏷 ' + fmName() + ' title page up');
+  };
+  $('fmCountdown').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'fast-title'; s.fast.countdownId = (s.fast.countdownId || 0) + 1; });
+    toast('🎬 3-2-1… holds on the title until you press Show ' + fmName());
+  };
+  $('fmShowBoard').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'fast'; });
+    toast('▶ ' + fmName() + ' board up!');
+  };
+
+  let fmPlayer = 1;
+  $('fmP1').onclick = () => setFmPlayer(1);
+  $('fmP2').onclick = () => setFmPlayer(2);
+  function setFmPlayer(p) {
+    fmPlayer = p;
+    $('fmP1').className = 'btn ' + (p === 1 ? 'blue' : 'ghost');
+    $('fmP2').className = 'btn ' + (p === 2 ? 'blue' : 'ghost');
+    $('fmP1').textContent = 'Player 1' + (p === 1 ? ' (on board)' : '');
+    $('fmP2').textContent = 'Player 2' + (p === 2 ? ' (on board)' : '');
+    Store.patch((s) => { s.fast.playerView = p; });
+    renderFast();
+  }
+
+  function fmData() { return (fmPlayer === 2 ? S().fast.p2 : S().fast.p1).slice(0, Store.fastSlots()); }
+
+  // Speed-round question navigation — the board shows the selected question.
+  function setFastQ(i) {
+    Store.patch((s) => {
+      s.fast.questionIndex = Math.max(0, Math.min(s.questions.fast.length - 1, i));
+    });
+    renderFast();
+  }
+  $('fmPrevQ').onclick = () => setFastQ((S().fast.questionIndex || 0) - 1);
+  $('fmNextQ').onclick = () => setFastQ((S().fast.questionIndex || 0) + 1);
+  $('fmQSelect').onchange = () => setFastQ(+$('fmQSelect').value);
+
+  function renderFast() {
+    const s = S();
+    const data = fmData();
+    const rows = $('fmRows');
+
+    // question picker + preview
+    const qi = s.fast.questionIndex || 0;
+    $('fmQSelect').innerHTML = s.questions.fast.map((q, i) =>
+      `<option value="${i}" ${i === qi ? 'selected' : ''}>${i + 1}. ${escHtml(q.q).slice(0, 60)}</option>`).join('');
+    const curQ = s.questions.fast[qi];
+    $('fmQPreview').textContent = curQ ? curQ.q : '(no speed-round questions — add some in the Editor)';
+
+    // suggestions: the current question's answers first, then the rest
+    const pool = [];
+    if (curQ) curQ.answers.forEach((a) => pool.push(a));
+    s.questions.fast.forEach((q, i) => { if (i !== qi) q.answers.forEach((a) => pool.push(a)); });
+    rows.innerHTML = data.map((item, i) => `
+      <div class="fm-row" data-i="${i}">
+        <div class="idx">${i + 1}</div>
+        <div class="fm-suggest">
+          <input type="text" class="answer" data-i="${i}" placeholder="Answer ${i + 1}" value="${escAttr(item.answer)}" autocomplete="off" />
+          <div class="fm-suggest-list hidden" data-list="${i}"></div>
+        </div>
+        <input type="number" class="points" data-i="${i}" placeholder="pts" value="${item.points || ''}" />
+        <button class="btn ${item.revealed ? 'ghost' : 'green'} sm" data-rev="${i}">${item.revealed ? 'Hide' : 'Reveal'}</button>
+      </div>`).join('');
+
+    rows.querySelectorAll('input.answer').forEach((inp) => {
+      inp.oninput = () => { updateFm(+inp.dataset.i, { answer: inp.value }); showSuggest(+inp.dataset.i, inp.value, pool); };
+      inp.onblur = () => setTimeout(() => hideSuggest(+inp.dataset.i), 180);
+      inp.onfocus = () => showSuggest(+inp.dataset.i, inp.value, pool);
+    });
+    rows.querySelectorAll('input.points').forEach((inp) => {
+      inp.oninput = () => updateFm(+inp.dataset.i, { points: +inp.value || 0 });
+    });
+    rows.querySelectorAll('[data-rev]').forEach((b) => {
+      b.onclick = () => { const i = +b.dataset.rev; updateFm(i, { revealed: !fmData()[i].revealed }); Sound.flip(); renderFast(); };
+    });
+    $('fmTotal').textContent = fastTotal();
+  }
+
+  function showSuggest(i, val, pool) {
+    const box = document.querySelector(`[data-list="${i}"]`);
+    if (!box) return;
+    const v = (val || '').toLowerCase();
+    const matches = pool.filter((a) => a.text.toLowerCase().includes(v)).slice(0, 12);
+    if (!matches.length) { box.classList.add('hidden'); return; }
+    box.innerHTML = matches.map((a) => `<div data-t="${escAttr(a.text)}" data-p="${a.points}"><span>${escHtml(a.text)}</span><b>${a.points}</b></div>`).join('');
+    box.classList.remove('hidden');
+    box.querySelectorAll('div').forEach((d) => {
+      d.onmousedown = () => {
+        updateFm(i, { answer: d.dataset.t, points: +d.dataset.p });
+        box.classList.add('hidden'); renderFast();
+      };
+    });
+  }
+  function hideSuggest(i) { const box = document.querySelector(`[data-list="${i}"]`); if (box) box.classList.add('hidden'); }
+
+  function updateFm(i, patch) {
+    Store.patch((s) => {
+      const arr = fmPlayer === 2 ? s.fast.p2 : s.fast.p1;
+      Object.assign(arr[i], patch);
+    });
+    $('fmTotal').textContent = fastTotal();
+  }
+  function fastTotal() {
+    const s = S();
+    const a = s.fast.p1.reduce((t, x) => t + (x.revealed ? +x.points || 0 : 0), 0);
+    const b = s.fast.p2.reduce((t, x) => t + (x.revealed ? +x.points || 0 : 0), 0);
+    return a + b;
+  }
+
+  $('fmRevealAll').onclick = () => { Store.patch((s) => { (fmPlayer === 2 ? s.fast.p2 : s.fast.p1).forEach((x) => x.revealed = true); }); Sound.flip(); renderFast(); };
+  $('fmHideAll').onclick = () => { Store.patch((s) => { (fmPlayer === 2 ? s.fast.p2 : s.fast.p1).forEach((x) => x.revealed = false); }); renderFast(); };
+  $('fmToggleTotal').onclick = () => Store.patch((s) => { s.fast.showTotals = !s.fast.showTotals; });
+  $('fmWin').onclick = () => { Store.fx('confetti'); toast('🎉 Winner!'); };
+
+  // timer
+  let timerInt = null;
+  $('fmStart').onclick = () => {
+    const secs = +$('fmTimerSet').value || 20;
+    Store.patch((s) => { s.fast.timerSeconds = secs; s.fast.timerMax = secs; s.fast.timerRunning = true; s.fast.timerLabel = $('fmLabel').value || 'PLAYER ' + fmPlayer; });
+    clearInterval(timerInt);
+    timerInt = setInterval(() => {
+      const cur = S().fast.timerSeconds;
+      if (cur <= 0) { clearInterval(timerInt); Sound.timeUp(); Store.patch((s) => { s.fast.timerRunning = false; }); return; }
+      Store.patch((s) => { s.fast.timerSeconds = cur - 1; });
+      if (cur - 1 <= 5 && cur - 1 > 0) Sound.click();
+    }, 1000);
+  };
+  $('fmStop').onclick = () => { clearInterval(timerInt); Store.patch((s) => { s.fast.timerRunning = false; }); };
+  $('fmReset').onclick = () => { clearInterval(timerInt); const secs = +$('fmTimerSet').value || 20; Store.patch((s) => { s.fast.timerSeconds = secs; s.fast.timerMax = secs; s.fast.timerRunning = false; }); };
+  $('fmLabel').oninput = () => Store.patch((s) => { s.fast.timerLabel = $('fmLabel').value; });
+
+  // Full Fast Money reset: both players' answers, totals, timer, back to Q1.
+  $('fmResetRound').onclick = () => {
+    if (!confirm('Reset Fast Money? This clears BOTH players\' answers, hides totals, resets the timer, and returns to question 1.')) return;
+    clearInterval(timerInt);
+    const secs = +$('fmTimerSet').value || 20;
+    Store.patch((s) => {
+      s.fast.p1 = Store.emptyFast();
+      s.fast.p2 = Store.emptyFast();
+      s.fast.showTotals = false;
+      s.fast.questionIndex = 0;
+      s.fast.timerSeconds = secs;
+      s.fast.timerMax = secs;
+      s.fast.timerRunning = false;
+    });
+    renderFast();
+    toast('↺ Fast Money reset — fresh round');
+  };
+
+  /* ---------------- WHEEL OF FORTUNE (bonus game) ---------------- */
+  const VOWELS = 'AEIOU';
+  function whPuzzle() { return (S().questions.wheel || [])[S().wheel.puzzleIndex]; }
+
+  $('whTitleBtn').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'wheel-title'; });
+    toast('🏷 Wheel title page up');
+  };
+  $('whCountdown').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'wheel-title'; s.wheel.countdownId = (s.wheel.countdownId || 0) + 1; });
+    toast('🎬 3-2-1… holds on the title until you press Show Puzzle');
+  };
+  $('whShowBoard').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'wheel'; });
+    toast('▶ Puzzle board up!');
+  };
+  $('whSpin').onclick = () => {
+    const W = window.FF_WHEEL_WEDGES || [];
+    if (!W.length) return;
+    const i = Math.floor(Math.random() * W.length);
+    Store.patch((s) => {
+      s.boardMode = 'wheel';
+      s.wheel.spinId = (s.wheel.spinId || 0) + 1;
+      s.wheel.spinResult = { wedge: i, label: W[i].label, v: W[i].v };
+    });
+    Sound.click();
+    toast('🎡 Spinning…');
+  };
+  $('whSolve').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'wheel'; s.wheel.solved = true; });
+    toast('🎉 Puzzle solved — full reveal!');
+  };
+  $('whResetPuzzle').onclick = () => {
+    Store.patch((s) => { s.wheel.called = []; s.wheel.solved = false; s.wheel.spinResult = null; });
+    toast('↺ Puzzle reset — letters cleared');
+  };
+
+  function setWheelQ(i) {
+    Store.patch((s) => {
+      const n = (s.questions.wheel || []).length;
+      s.wheel.puzzleIndex = Math.max(0, Math.min(n - 1, i));
+      s.wheel.called = []; s.wheel.solved = false; s.wheel.spinResult = null;
+    });
+    renderWheelPanel();
+  }
+  $('whPrevQ').onclick = () => setWheelQ(S().wheel.puzzleIndex - 1);
+  $('whNextQ').onclick = () => setWheelQ(S().wheel.puzzleIndex + 1);
+  $('whQSelect').onchange = () => setWheelQ(+$('whQSelect').value);
+
+  function callLetter(L) {
+    const s = S();
+    if ((s.wheel.called || []).includes(L) || s.wheel.solved) return;
+    const puz = whPuzzle(); if (!puz) return;
+    const count = [...String(puz.phrase).toUpperCase()].filter((c) => c === L).length;
+    Store.patch((st) => { st.wheel.called = [...(st.wheel.called || []), L]; st.boardMode = 'wheel'; });
+    if (count > 0) {
+      Sound.ding();
+      toast(`✔ ${L} × ${count}!`);
+      const r = S().wheel.spinResult;
+      if (r && r.v != null && !VOWELS.includes(L)) $('whAward').value = r.v * count;
+    } else {
+      Sound.strike();
+      toast(`✕ No ${L}`);
+    }
+    renderWheelPanel();
+  }
+
+  function renderWheelPanel() {
+    const s = S();
+    const qs = s.questions.wheel || [];
+    const sel = $('whQSelect');
+    if (document.activeElement !== sel) {
+      sel.innerHTML = qs.map((p, i) =>
+        `<option value="${i}" ${i === s.wheel.puzzleIndex ? 'selected' : ''}>${i + 1}. ${escHtml(p.category || 'PUZZLE')} — ${escHtml(p.phrase).slice(0, 40)}</option>`).join('');
+    }
+    const puz = qs[s.wheel.puzzleIndex];
+    $('whPreview').textContent = puz ? `${puz.category || 'PUZZLE'}: ${puz.phrase}` : '(no puzzles — add some in the Editor → Wheel tab)';
+    const r = s.wheel.spinResult;
+    $('whSpinInfo').textContent = r
+      ? (r.v == null ? `Last spin: ${r.label} — no points this turn!` : `Last spin: ${r.label} points per consonant`)
+      : 'No spin yet — press 🎡 SPIN!';
+    const kb = $('whKeyboard');
+    const called = s.wheel.called || [];
+    kb.innerHTML = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].map((L) =>
+      `<button data-l="${L}" class="${VOWELS.includes(L) ? 'vowel' : ''}" ${called.includes(L) || s.wheel.solved ? 'disabled' : ''}>${L}</button>`).join('');
+    kb.querySelectorAll('button[data-l]').forEach((b) => { b.onclick = () => callLetter(b.dataset.l); });
+  }
+
+  $('whAwardT0').onclick = () => awardWheel(0);
+  $('whAwardT1').onclick = () => awardWheel(1);
+  function awardWheel(i) {
+    const pts = +$('whAward').value || 0;
+    if (!pts) { toast('Set the points to award first'); return; }
+    Store.patch((s) => { if (s.teams[i]) s.teams[i].score += pts; });
+    Sound.ding();
+    toast(`+${pts} → ${S().teams[i].name}`);
+  }
+
+  /* ---------------- BOARD PICKERS (15 Jeopardy + 5 Feud boards) ---------- */
   // Switching saves the current board's edits back to its bank, loads the
   // chosen bank, resets round state, and drops players on the title page.
   function renderBoardPickers() {
@@ -677,6 +953,7 @@
   /* ---------------- Keyboard shortcuts ---------------- */
   addEventListener('keydown', (e) => {
     if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+    if (S().boardMode !== 'main' && $('fastPanel').classList.contains('hidden') === false) return;
     if (e.key >= '1' && e.key <= '8') {
       const i = +e.key - 1;
       const q = S().questions.main[S().main.questionIndex];
@@ -695,19 +972,31 @@
   function syncTabs() {
     const s = S();
     const isJp = s.boardMode === 'jeopardy' || s.boardMode === 'jeopardy-title';
+    const isFm = s.boardMode === 'fast' || s.boardMode === 'fast-title';
+    const isWh = s.boardMode === 'wheel' || s.boardMode === 'wheel-title';
     const tab = s.boardMode === 'leaderboard' ? 'event'
       : (s.boardMode === 'matchup' || s.boardMode === 'question' || s.boardMode === 'feud-title') ? 'main'
       : isJp ? 'jeopardy'
+      : isFm ? 'fast'
+      : isWh ? 'wheel'
       : s.boardMode;
     $('modeTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.mode === tab));
-    $('mainPanel').classList.toggle('hidden', s.boardMode === 'leaderboard' || isJp);
+    $('mainPanel').classList.toggle('hidden', isFm || isWh || s.boardMode === 'leaderboard' || isJp);
+    $('fastPanel').classList.toggle('hidden', !isFm);
+    $('wheelPanel').classList.toggle('hidden', !isWh);
     $('eventPanel').classList.toggle('hidden', s.boardMode !== 'leaderboard');
     $('jeopPanel').classList.toggle('hidden', !isJp);
   }
 
   Store.subscribe(() => {
-    renderMain(); renderStrikeDots(); updateEventUI();
+    renderMain(); renderStrikeDots(); $('fmTotal').textContent = fastTotal(); updateEventUI();
     updateIntroBtn();
+    // Rebuild the Fast Money rows only when the slot count changes (e.g. the
+    // editor added speed-round questions) — a full re-render on every patch
+    // would steal focus from the answer inputs mid-typing.
+    if (document.querySelectorAll('#fmRows .fm-row').length !== Store.fastSlots()) renderFast();
+    applyFmName();
+    if (!$('wheelPanel').classList.contains('hidden')) renderWheelPanel();
     renderBoardPickers();
     if (!$('jeopPanel').classList.contains('hidden')) renderJpGrid();
     const cn = $('ctlClientName');
@@ -718,9 +1007,13 @@
     renderTeams();
     renderQuestionSelect();
     renderMain();
+    renderFast();
+    setFmPlayer(1);
     syncTabs();
     const on = S().sound !== false;
     $('toggleSound').textContent = on ? '🔊 Sound: On' : '🔇 Sound: Off';
+    $('fmTimerSet').value = S().fast.timerMax || 20;
+    renderWheelPanel();
     initEvent();
     buildRoster();
     updateEventUI();

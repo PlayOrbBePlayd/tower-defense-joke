@@ -13,6 +13,8 @@
 
   function bank() { return S().questions[tab]; }
 
+  // Board picker — drives which of the banks is being edited (Jeopardy and
+  // Family Feud tabs only; Speed Round and Wheel have a single shared bank).
   $('edBoardSel').onchange = () => {
     const kind = tab === 'jeopardy' ? 'jeop' : 'feud';
     Store.switchBoard(kind, +$('edBoardSel').value);
@@ -24,22 +26,29 @@
     // Live question counts on the tabs
     const q = S().questions;
     $('tabs').querySelector('[data-t="main"]').textContent = `Family Feud (${q.main.length})`;
+    $('tabs').querySelector('[data-t="fast"]').textContent = `Speed Round (${q.fast.length})`;
     const J = q.jeopardy || { categories: [] };
     const per = J.categories.length ? Math.max(...J.categories.map((c) => c.clues.length)) : 0;
     $('tabs').querySelector('[data-t="jeopardy"]').textContent = `Jeopardy (${J.categories.length}×${per})`;
+    $('tabs').querySelector('[data-t="wheel"]').textContent = `Wheel (${(q.wheel || []).length})`;
 
-    // Board picker — one select drives which of the 5 banks is being edited.
+    // Board picker visibility + options for the current tab
     const sel = $('edBoardSel');
-    if (sel && document.activeElement !== sel) {
-      const kind = tab === 'jeopardy' ? 'jeop' : 'feud';
-      const st = S();
-      sel.innerHTML = (st.banks[kind] || []).map((b, i) =>
-        `<option value="${i}" ${i === st.activeBoards[kind] ? 'selected' : ''}>${escHtml(b.name)}</option>`).join('');
+    if (sel) {
+      const pickable = tab === 'jeopardy' || tab === 'main';
+      sel.classList.toggle('hidden', !pickable);
+      if (pickable && document.activeElement !== sel) {
+        const kind = tab === 'jeopardy' ? 'jeop' : 'feud';
+        const st = S();
+        sel.innerHTML = (st.banks[kind] || []).map((b, i) =>
+          `<option value="${i}" ${i === st.activeBoards[kind] ? 'selected' : ''}>${escHtml(b.name)}</option>`).join('');
+      }
     }
 
     // The Jeopardy bank has its own structure & renderer.
     $('addQ').classList.toggle('hidden', tab === 'jeopardy');
     if (tab === 'jeopardy') { renderJeopardyEditor(); return; }
+    if (tab === 'wheel') { renderWheelEditor(); return; }
 
     const list = $('list');
     const qs = bank();
@@ -203,6 +212,40 @@
       if (el.tagName === 'SELECT') el.oninput = null;   // avoid double-fire on selects
     });
     bindImgButtons();
+  }
+
+  /* ---- Wheel of Fortune puzzles: category + phrase per card ---- */
+  function renderWheelEditor() {
+    const qs = S().questions.wheel || [];
+    $('list').innerHTML = qs.map((p, i) => `
+      <div class="panel q-card">
+        <div class="q-top">
+          <span class="qnum">${i + 1}</span>
+          <input type="text" style="max-width:220px" data-wh="cat:${i}" value="${escAttr(p.category || '')}" placeholder="Category (e.g. PHRASE)" />
+          <input type="text" class="qtext" data-wh="phrase:${i}" value="${escAttr(p.phrase || '')}" placeholder="THE PUZZLE PHRASE" />
+          <button class="btn red sm" data-whdel="${i}" title="Delete puzzle">✕</button>
+        </div>
+        <div class="sum">Letters A–Z become tiles; spaces split words; punctuation shows automatically. Phrases display in CAPITALS.</div>
+      </div>`).join('') || '<p class="sum">No puzzles yet. Click “Add Question”.</p>';
+    $('list').querySelectorAll('[data-wh]').forEach((el) => {
+      el.oninput = () => {
+        const [kind, i] = el.dataset.wh.split(':');
+        Store.patch((s) => {
+          const p = s.questions.wheel[+i]; if (!p) return;
+          if (kind === 'cat') p.category = el.value.toUpperCase();
+          else p.phrase = el.value.toUpperCase();
+        });
+      };
+    });
+    $('list').querySelectorAll('[data-whdel]').forEach((b) => {
+      b.onclick = () => {
+        Store.patch((s) => {
+          s.questions.wheel.splice(+b.dataset.whdel, 1);
+          if (s.wheel.puzzleIndex >= s.questions.wheel.length) s.wheel.puzzleIndex = Math.max(0, s.questions.wheel.length - 1);
+        });
+        render(); toast('Puzzle deleted');
+      };
+    });
   }
 
   function updateDdCount() {
@@ -389,8 +432,15 @@
   }
 
   $('addQ').onclick = () => {
-    Store.patch((s) => { s.questions[tab].push({ q: 'New question…', answers: [{ text: '', points: 0 }, { text: '', points: 0 }, { text: '', points: 0 }] }); });
-    render(); toast('Question added');
+    Store.patch((s) => {
+      if (tab === 'wheel') {
+        if (!Array.isArray(s.questions.wheel)) s.questions.wheel = [];
+        s.questions.wheel.push({ category: 'PHRASE', phrase: '' });
+      } else {
+        s.questions[tab].push({ q: 'New question…', answers: [{ text: '', points: 0 }, { text: '', points: 0 }, { text: '', points: 0 }] });
+      }
+    });
+    render(); toast(tab === 'wheel' ? 'Puzzle added' : 'Question added');
     window.scrollTo(0, document.body.scrollHeight);
   };
 
@@ -398,7 +448,7 @@
     const data = JSON.stringify(S().questions, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'game-show-roundup-questions.json'; a.click();
+    a.href = URL.createObjectURL(blob); a.download = 'family-feud-questions.json'; a.click();
     toast('Exported JSON');
   };
   $('importBtn').onclick = () => $('importFile').click();
@@ -408,10 +458,9 @@
     r.onload = () => {
       try {
         const data = JSON.parse(r.result);
-        if (!data.main) throw new Error('Missing main questions array');
-        if (!Array.isArray(data.fast)) data.fast = [];
+        if (!data.main || !data.fast) throw new Error('Missing main/fast arrays');
         Store.patch((s) => { const keep = s.questions.jeopardy; s.questions = data; if (!s.questions.jeopardy) s.questions.jeopardy = keep || { categories: [] }; });
-        render(); toast('Imported ' + data.main.length + ' questions');
+        render(); toast('Imported ' + (data.main.length + data.fast.length) + ' questions');
       } catch (err) { alert('Invalid file: ' + err.message); }
     };
     r.readAsText(file); e.target.value = '';
