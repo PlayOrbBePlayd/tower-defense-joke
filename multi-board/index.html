@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Show Roundup · Multi-Board — TeamBuilding ROI</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%231746c9%22/%3E%3Ctext x=%2250%22 y=%2272%22 font-size=%2270%22 text-anchor=%22middle%22 fill=%22%23ffc21c%22 font-family=%22Arial%22 font-weight=%22bold%22%3EF%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/app.css?v=20260718f" />
+  <style>
+    .home { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; text-align:center; }
+    .hero-logo { width: clamp(90px,14vh,150px); height: clamp(90px,14vh,150px); border-radius:24px; margin-bottom:18px; }
+    .hero-title { font-family: var(--font-display); font-size: clamp(46px, 9vw, 130px); line-height:.9; color:#fff;
+      text-shadow: 0 5px 0 var(--c-primary-dk), 0 12px 30px rgba(0,0,0,.6); }
+    .hero-title .a { color: var(--c-accent); text-shadow: 0 5px 0 var(--c-accent-dk); }
+    .hero-sub { font-family: var(--font-cond); font-weight:700; letter-spacing:.42em; text-transform:uppercase; color: var(--c-accent); font-size: clamp(13px,1.8vw,24px); margin: 6px 0 4px; }
+    .hero-client { color:#9fb0e6; font-size:14px; margin-bottom: 34px; letter-spacing:.05em; }
+    .marquee { display:flex; gap:12px; margin: 14px 0 30px; }
+    .bulb { width:12px; height:12px; border-radius:50%; background: var(--c-accent); box-shadow:0 0 12px var(--c-accent); animation: bulb 1.1s infinite; }
+    .bulb:nth-child(odd){ animation-delay:.55s; }
+    @keyframes bulb { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+    .cards { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:18px; max-width:1000px; width:100%; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:26px 20px; cursor:pointer;
+      text-decoration:none; color:#fff; transition: transform .12s, border-color .12s, box-shadow .12s;
+      display:flex; flex-direction:column; align-items:center; gap:10px;
+    }
+    .card:hover { transform: translateY(-5px); border-color: var(--c-accent); box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+    .card .ico { font-size:44px; }
+    .card .ct { font-family: var(--font-cond); font-weight:700; text-transform:uppercase; letter-spacing:.05em; font-size:22px; }
+    .card .cd { color:#9fb0e6; font-size:13px; line-height:1.4; }
+    .card.primary { background: linear-gradient(180deg, var(--c-primary-lt), var(--c-primary-dk)); border-color: var(--c-accent); }
+    .footer-tip { margin-top:34px; color:#8b9bd0; font-size:13px; max-width:640px; line-height:1.6; }
+    .footer-tip .kbd { background: rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); border-radius:5px; padding:1px 7px; font-family:monospace; }
+  </style>
+</head>
+<body class="stage-lights">
+  <div class="home">
+    <div class="brand-logo hero-logo" data-brand-logo></div>
+    <div class="hero-title">GAME SHOW <span class="a">ROUNDUP!</span></div>
+    <div class="hero-sub">MULTI-BOARD · PRESENTED BY TEAMBUILDING ROI</div>
+    <div class="hero-client">Client: <span data-client-name>Default</span></div>
+    <div class="marquee">
+      <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+      <span class="bulb"></span><span class="bulb"></span><span class="bulb"></span><span class="bulb"></span>
+    </div>
+
+    <div class="cards">
+      <a class="card primary" id="cardControl" href="control.html">
+        <div class="ico">🎛️</div>
+        <div class="ct">Host Control</div>
+        <div class="cd">Run the show. 5 Jeopardy boards, 5 Feud boards, scores &amp; effects.</div>
+      </a>
+      <a class="card" id="cardBoard" href="board.html" target="_blank">
+        <div class="ico">📺</div>
+        <div class="ct">Open Board</div>
+        <div class="cd">The big audience display. Put this on the TV / projector.</div>
+      </a>
+      <a class="card" href="editor.html">
+        <div class="ico">✎</div>
+        <div class="ct">Questions</div>
+        <div class="cd">Create &amp; customize questions and answers for every game.</div>
+      </a>
+      <a class="card" href="settings.html">
+        <div class="ico">🎨</div>
+        <div class="ct">Branding</div>
+        <div class="cd">Add a client logo, pick colors, save client profiles.</div>
+      </a>
+    </div>
+
+    <div class="footer-tip">
+      <strong>Two-screen setup:</strong> open <em>Host Control</em> on your laptop, then click
+      <em>Open Board</em> and drag that window onto the projector (press <span class="kbd">F</span> there for fullscreen).
+      Everything you do in Control appears instantly on the Board.
+    </div>
+  </div>
+
+  <script src="js/data.js?v=20260718f"></script>
+  <script src="js/store.js?v=20260718f"></script>
+  <script src="js/theme.js?v=20260718f"></script>
+  <script>
+    Store.subscribe(() => Theme.apply()); Theme.apply();
+  </script>
+</body>
+</html>
