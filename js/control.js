@@ -21,9 +21,10 @@
   });
   function switchPanel(mode) {
     $('modeTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
-    const isFast = mode === 'fast', isEvent = mode === 'event', isJeop = mode === 'jeopardy';
-    $('mainPanel').classList.toggle('hidden', isFast || isEvent || isJeop);
+    const isFast = mode === 'fast', isEvent = mode === 'event', isJeop = mode === 'jeopardy', isWheel = mode === 'wheel';
+    $('mainPanel').classList.toggle('hidden', isFast || isEvent || isJeop || isWheel);
     $('fastPanel').classList.toggle('hidden', !isFast);
+    $('wheelPanel').classList.toggle('hidden', !isWheel);
     $('eventPanel').classList.toggle('hidden', !isEvent);
     $('jeopPanel').classList.toggle('hidden', !isJeop);
     if (isJeop) renderJpGrid();
@@ -42,6 +43,7 @@
           || s.fast.showTotals || s.fast.timerRunning;
         if (!live) bm = 'fast-title';
       }
+      if (mode === 'wheel' && !(s.wheel.called || []).length && !s.wheel.solved) bm = 'wheel-title';
       s.boardMode = bm;
     });
     if (isEvent) buildRoster();
@@ -490,6 +492,104 @@
     toast('↺ Fast Money reset — fresh round');
   };
 
+  /* ---------------- WHEEL OF FORTUNE (bonus game) ---------------- */
+  const VOWELS = 'AEIOU';
+  function whPuzzle() { return (S().questions.wheel || [])[S().wheel.puzzleIndex]; }
+
+  $('whTitleBtn').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'wheel-title'; });
+    toast('🏷 Wheel title page up');
+  };
+  $('whCountdown').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'wheel-title'; s.wheel.countdownId = (s.wheel.countdownId || 0) + 1; });
+    toast('🎬 3-2-1… holds on the title until you press Show Puzzle');
+  };
+  $('whShowBoard').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'wheel'; });
+    toast('▶ Puzzle board up!');
+  };
+  $('whSpin').onclick = () => {
+    const W = window.FF_WHEEL_WEDGES || [];
+    if (!W.length) return;
+    const i = Math.floor(Math.random() * W.length);
+    Store.patch((s) => {
+      s.boardMode = 'wheel';
+      s.wheel.spinId = (s.wheel.spinId || 0) + 1;
+      s.wheel.spinResult = { wedge: i, label: W[i].label, v: W[i].v };
+    });
+    Sound.click();
+    toast('🎡 Spinning…');
+  };
+  $('whSolve').onclick = () => {
+    Store.patch((s) => { s.boardMode = 'wheel'; s.wheel.solved = true; });
+    toast('🎉 Puzzle solved — full reveal!');
+  };
+  $('whResetPuzzle').onclick = () => {
+    Store.patch((s) => { s.wheel.called = []; s.wheel.solved = false; s.wheel.spinResult = null; });
+    toast('↺ Puzzle reset — letters cleared');
+  };
+
+  function setWheelQ(i) {
+    Store.patch((s) => {
+      const n = (s.questions.wheel || []).length;
+      s.wheel.puzzleIndex = Math.max(0, Math.min(n - 1, i));
+      s.wheel.called = []; s.wheel.solved = false; s.wheel.spinResult = null;
+    });
+    renderWheelPanel();
+  }
+  $('whPrevQ').onclick = () => setWheelQ(S().wheel.puzzleIndex - 1);
+  $('whNextQ').onclick = () => setWheelQ(S().wheel.puzzleIndex + 1);
+  $('whQSelect').onchange = () => setWheelQ(+$('whQSelect').value);
+
+  function callLetter(L) {
+    const s = S();
+    if ((s.wheel.called || []).includes(L) || s.wheel.solved) return;
+    const puz = whPuzzle(); if (!puz) return;
+    const count = [...String(puz.phrase).toUpperCase()].filter((c) => c === L).length;
+    Store.patch((st) => { st.wheel.called = [...(st.wheel.called || []), L]; st.boardMode = 'wheel'; });
+    if (count > 0) {
+      Sound.ding();
+      toast(`✔ ${L} × ${count}!`);
+      const r = S().wheel.spinResult;
+      if (r && r.v != null && !VOWELS.includes(L)) $('whAward').value = r.v * count;
+    } else {
+      Sound.strike();
+      toast(`✕ No ${L}`);
+    }
+    renderWheelPanel();
+  }
+
+  function renderWheelPanel() {
+    const s = S();
+    const qs = s.questions.wheel || [];
+    const sel = $('whQSelect');
+    if (document.activeElement !== sel) {
+      sel.innerHTML = qs.map((p, i) =>
+        `<option value="${i}" ${i === s.wheel.puzzleIndex ? 'selected' : ''}>${i + 1}. ${escHtml(p.category || 'PUZZLE')} — ${escHtml(p.phrase).slice(0, 40)}</option>`).join('');
+    }
+    const puz = qs[s.wheel.puzzleIndex];
+    $('whPreview').textContent = puz ? `${puz.category || 'PUZZLE'}: ${puz.phrase}` : '(no puzzles — add some in the Editor → Wheel tab)';
+    const r = s.wheel.spinResult;
+    $('whSpinInfo').textContent = r
+      ? (r.v == null ? `Last spin: ${r.label} — no points this turn!` : `Last spin: ${r.label} points per consonant`)
+      : 'No spin yet — press 🎡 SPIN!';
+    const kb = $('whKeyboard');
+    const called = s.wheel.called || [];
+    kb.innerHTML = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].map((L) =>
+      `<button data-l="${L}" class="${VOWELS.includes(L) ? 'vowel' : ''}" ${called.includes(L) || s.wheel.solved ? 'disabled' : ''}>${L}</button>`).join('');
+    kb.querySelectorAll('button[data-l]').forEach((b) => { b.onclick = () => callLetter(b.dataset.l); });
+  }
+
+  $('whAwardT0').onclick = () => awardWheel(0);
+  $('whAwardT1').onclick = () => awardWheel(1);
+  function awardWheel(i) {
+    const pts = +$('whAward').value || 0;
+    if (!pts) { toast('Set the points to award first'); return; }
+    Store.patch((s) => { if (s.teams[i]) s.teams[i].score += pts; });
+    Sound.ding();
+    toast(`+${pts} → ${S().teams[i].name}`);
+  }
+
   /* ---------------- JEOPARDY (opener round) ---------------- */
   function jpData() { return S().questions.jeopardy || { categories: [] }; }
 
@@ -844,14 +944,17 @@
     const s = S();
     const isJp = s.boardMode === 'jeopardy' || s.boardMode === 'jeopardy-title';
     const isFm = s.boardMode === 'fast' || s.boardMode === 'fast-title';
+    const isWh = s.boardMode === 'wheel' || s.boardMode === 'wheel-title';
     const tab = s.boardMode === 'leaderboard' ? 'event'
       : (s.boardMode === 'matchup' || s.boardMode === 'question' || s.boardMode === 'feud-title') ? 'main'
       : isJp ? 'jeopardy'
       : isFm ? 'fast'
+      : isWh ? 'wheel'
       : s.boardMode;
     $('modeTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.mode === tab));
-    $('mainPanel').classList.toggle('hidden', isFm || s.boardMode === 'leaderboard' || isJp);
+    $('mainPanel').classList.toggle('hidden', isFm || isWh || s.boardMode === 'leaderboard' || isJp);
     $('fastPanel').classList.toggle('hidden', !isFm);
+    $('wheelPanel').classList.toggle('hidden', !isWh);
     $('eventPanel').classList.toggle('hidden', s.boardMode !== 'leaderboard');
     $('jeopPanel').classList.toggle('hidden', !isJp);
   }
@@ -864,6 +967,7 @@
     // would steal focus from the answer inputs mid-typing.
     if (document.querySelectorAll('#fmRows .fm-row').length !== Store.fastSlots()) renderFast();
     applyFmName();
+    if (!$('wheelPanel').classList.contains('hidden')) renderWheelPanel();
     if (!$('jeopPanel').classList.contains('hidden')) renderJpGrid();
     const cn = $('ctlClientName');
     if (cn && document.activeElement !== cn) cn.value = S().clientName || '';
@@ -879,6 +983,7 @@
     const on = S().sound !== false;
     $('toggleSound').textContent = on ? '🔊 Sound: On' : '🔇 Sound: Off';
     $('fmTimerSet').value = S().fast.timerMax || 20;
+    renderWheelPanel();
     initEvent();
     buildRoster();
     updateEventUI();
