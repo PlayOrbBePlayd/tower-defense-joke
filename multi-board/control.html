@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Control — Game Show Roundup</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%231746c9%22/%3E%3Ctext x=%2250%22 y=%2272%22 font-size=%2270%22 text-anchor=%22middle%22 fill=%22%23ffc21c%22 font-family=%22Arial%22 font-weight=%22bold%22%3EF%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="css/app.css?v=20260718f" />
-  <link rel="stylesheet" href="css/control.css?v=20260718f" />
+  <link rel="stylesheet" href="css/app.css?v=20260719" />
+  <link rel="stylesheet" href="css/control.css?v=20260719" />
 </head>
 <body>
   <div class="ctrl-root">
@@ -23,6 +23,8 @@
         <button data-mode="logo">Title</button>
         <button data-mode="jeopardy">Jeopardy</button>
         <button data-mode="main" class="active">Family Feud</button>
+        <button data-mode="fast">Fast Money</button>
+        <button data-mode="wheel">Wheel</button>
         <button data-mode="event">Event</button>
       </div>
       <button class="btn blue sm" id="openBoard">⧉ Open Board</button>
@@ -96,6 +98,76 @@
             </div>
             <div class="ea-hint">Tap the team that won this round to bank the points:</div>
             <div class="ea-grid" id="eaGrid"></div>
+          </div>
+        </div>
+
+        <!-- FAST MONEY PANEL -->
+        <div class="panel hidden" id="fastPanel">
+          <h2>Fast Money — Final Round</h2>
+          <div class="jpc-actions" style="margin-bottom:12px">
+            <button class="btn ghost sm" id="fmTitleBtn">🏷 Title Page</button>
+            <button class="btn red sm" id="fmCountdown">🎬 3-2-1 Countdown</button>
+            <button class="btn green sm" id="fmShowBoard">▶ Show Fast Money</button>
+          </div>
+          <div class="fm-player-tabs">
+            <button class="btn blue" data-player="1" id="fmP1">Player 1 (on board)</button>
+            <button class="btn ghost" data-player="2" id="fmP2">Player 2</button>
+          </div>
+
+          <div class="q-select-row">
+            <button class="btn ghost sm" id="fmPrevQ">◀ Prev</button>
+            <select id="fmQSelect"></select>
+            <button class="btn ghost sm" id="fmNextQ">Next ▶</button>
+          </div>
+          <div class="q-preview" id="fmQPreview"></div>
+
+          <div id="fmRows"></div>
+
+          <div class="fm-timer-row">
+            <label class="fld" style="margin:0">Timer</label>
+            <input type="number" id="fmTimerSet" value="20" style="width:80px" />
+            <button class="btn blue sm" id="fmStart">▶ Start</button>
+            <button class="btn ghost sm" id="fmStop">⏸ Stop</button>
+            <button class="btn ghost sm" id="fmReset">↺ Reset</button>
+            <input type="text" id="fmLabel" placeholder="Label (e.g. PLAYER 1)" style="flex:1;min-width:120px" />
+          </div>
+
+          <div class="reveal-actions">
+            <button class="btn ghost sm" id="fmRevealAll">Reveal All</button>
+            <button class="btn ghost sm" id="fmHideAll">Hide All</button>
+            <button class="btn gold sm" id="fmToggleTotal">Toggle Total</button>
+            <button class="btn red sm" id="fmResetRound">↺ Reset Fast Money</button>
+            <div class="fm-total-big" id="fmTotal" style="flex:1">0</div>
+            <button class="btn green" id="fmWin">🎉 Celebrate Win</button>
+          </div>
+        </div>
+
+        <!-- WHEEL OF FORTUNE PANEL -->
+        <div class="panel hidden" id="wheelPanel">
+          <h2>🎡 Wheel of Fortune — Bonus Game</h2>
+          <div class="jpc-actions" style="margin-bottom:12px">
+            <button class="btn ghost sm" id="whTitleBtn">🏷 Title Page</button>
+            <button class="btn red sm" id="whCountdown">🎬 3-2-1 Countdown</button>
+            <button class="btn green sm" id="whShowBoard">▶ Show Puzzle</button>
+            <button class="btn gold sm" id="whSpin">🎡 SPIN!</button>
+            <button class="btn blue sm" id="whSolve">✔ Solve — Reveal All</button>
+            <button class="btn ghost sm" id="whResetPuzzle">↺ Reset Puzzle</button>
+          </div>
+          <div class="q-select-row">
+            <button class="btn ghost sm" id="whPrevQ">◀ Prev</button>
+            <select id="whQSelect"></select>
+            <button class="btn ghost sm" id="whNextQ">Next ▶</button>
+          </div>
+          <div class="q-preview" id="whPreview"></div>
+          <div class="ea-hint" id="whSpinInfo" style="margin:8px 0">No spin yet — press 🎡 SPIN!</div>
+          <div class="wh-kb" id="whKeyboard"></div>
+          <div class="reveal-actions" style="margin-top:12px">
+            <label class="fld" style="margin:0;align-self:center">Award points</label>
+            <input type="number" id="whAward" value="0" style="width:110px" />
+            <button class="btn green sm" id="whAwardT0">→ Team 1</button>
+            <button class="btn green sm" id="whAwardT1">→ Team 2</button>
+            <span class="ea-spacer" style="flex:1"></span>
+            <span class="hint" style="margin:0;align-self:center">Puzzles are editable in the Editor → Wheel tab.</span>
           </div>
         </div>
 
@@ -216,6 +288,7 @@
           <button class="btn gold block" id="toLogo">🏆 Show Title Screen</button>
           <button class="btn blue block" id="toJeopardy">◇ Show Jeopardy</button>
           <button class="btn blue block" id="toMain">▶ Show Family Feud</button>
+          <button class="btn blue block" id="toFast">💰 Show Fast Money</button>
           <button class="btn green block" id="celebrate">🎊 Confetti + Fanfare</button>
           <div class="fx-row">
             <button class="btn ghost sm" id="fxSmoke">💨 Smoke</button>
@@ -287,12 +360,12 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="js/data.js?v=20260718f"></script>
-  <script src="js/store.js?v=20260718f"></script>
+  <script src="js/data.js?v=20260719"></script>
+  <script src="js/store.js?v=20260719"></script>
   <script>window.FF_SYNC_ROLE = 'writer';</script>
-  <script src="js/sync.js?v=20260718f"></script>
-  <script src="js/audio.js?v=20260718f"></script>
-  <script src="js/theme.js?v=20260718f"></script>
-  <script src="js/control.js?v=20260718f"></script>
+  <script src="js/sync.js?v=20260719"></script>
+  <script src="js/audio.js?v=20260719"></script>
+  <script src="js/theme.js?v=20260719"></script>
+  <script src="js/control.js?v=20260719"></script>
 </body>
 </html>

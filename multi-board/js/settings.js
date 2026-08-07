@@ -174,6 +174,7 @@
   function boot() {
     bindText('title', 'title');
     bindText('subtitle', 'subtitle');
+    bindText('fastName', 'fastName');
     $('clientName').value = S().clientName || '';
     renderSwatches();
     renderPresets();
