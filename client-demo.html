@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Example Board — TBROI Jeopardy</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%231746c9%22/%3E%3Ctext x=%2250%22 y=%2272%22 font-size=%2270%22 text-anchor=%22middle%22 fill=%22%23ffc21c%22 font-family=%22Arial%22 font-weight=%22bold%22%3EJ%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600;700&display=swap" />
+  <style>
+    :root {
+      --primary: #1746c9; --primary-lt: #2f62ea; --primary-dk: #0c2a7e;
+      --accent: #ffc21c; --accent-dk: #9a6a00; --deep: #050b2e;
+      --font-display: 'Anton', 'Impact', 'Arial Narrow', sans-serif;
+      --font-cond: 'Barlow Condensed', 'Oswald', 'Arial Narrow', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { min-height: 100vh; color: #fff; font-family: var(--font-cond);
+      background: radial-gradient(1400px 900px at 50% -10%, #14245e, var(--deep) 70%); }
+
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 22px 16px 48px; }
+
+    /* Preview banner — this is an example, not the real host-run game */
+    .preview-ribbon { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center;
+      background: linear-gradient(180deg, var(--accent), #e0a800); color: #3a2500;
+      border-radius: 12px; padding: 10px 18px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .12em; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+    .preview-ribbon .dot { width: 9px; height: 9px; border-radius: 50%; background: #3a2500; animation: blink 1.2s infinite; }
+    @keyframes blink { 50% { opacity: .25; } }
+
+    header { text-align: center; margin: 26px 0 8px; }
+    header .kicker { font-weight: 700; letter-spacing: .4em; text-transform: uppercase; color: var(--accent); font-size: clamp(12px, 1.6vw, 17px); }
+    header h1 { font-family: var(--font-display); font-size: clamp(38px, 6.5vw, 74px); line-height: 1;
+      text-shadow: 0 4px 0 var(--primary-dk), 0 10px 26px rgba(0,0,0,.55); letter-spacing: .01em; margin: 4px 0 10px; }
+    header h1 span { color: var(--accent); text-shadow: 0 4px 0 var(--accent-dk); }
+    .explain { max-width: 760px; margin: 0 auto 26px; text-align: center; color: #b9c6f2; font-size: clamp(15px, 1.8vw, 18px); line-height: 1.5; }
+    .explain b { color: #fff; }
+
+    /* The board */
+    .board { background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border: 3px solid var(--accent); border-radius: 18px; padding: clamp(8px, 1.4vw, 18px);
+      box-shadow: 0 24px 70px rgba(0,0,0,.55); }
+    .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(6px, 1vw, 12px); }
+    .cat { display: grid; place-items: center; text-align: center; min-height: clamp(52px, 7vw, 84px);
+      background: linear-gradient(180deg, var(--primary-lt), var(--primary-dk));
+      border-radius: 10px; padding: 6px 4px; font-weight: 700; text-transform: uppercase;
+      font-size: clamp(11px, 1.5vw, 19px); letter-spacing: .05em; line-height: 1.15;
+      box-shadow: inset 0 2px 8px rgba(255,255,255,.25), 0 6px 16px rgba(0,0,0,.35); }
+    .tile { display: grid; place-items: center; min-height: clamp(52px, 7.5vw, 92px); cursor: pointer;
+      background: linear-gradient(180deg, var(--primary), var(--primary-dk));
+      border: none; border-radius: 10px; font-family: var(--font-display);
+      font-size: clamp(20px, 3.4vw, 44px); color: var(--accent);
+      text-shadow: 0 3px 0 var(--accent-dk), 0 6px 14px rgba(0,0,0,.4);
+      box-shadow: inset 0 2px 8px rgba(255,255,255,.22), 0 6px 16px rgba(0,0,0,.35);
+      transition: transform .12s, filter .12s; }
+    .tile:hover { transform: translateY(-3px) scale(1.02); filter: brightness(1.15); }
+    .tile.used { background: linear-gradient(180deg, #0a1440, #060d2c); color: rgba(255,255,255,.25);
+      text-shadow: none; cursor: default; font-size: clamp(16px, 2.4vw, 30px); }
+    .tile.used:hover { transform: none; filter: none; }
+
+    .board-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; color: #8b9bd0; font-size: 14px; }
+    .board-foot button { background: none; border: 1px solid rgba(255,255,255,.25); color: #b9c6f2;
+      font-family: var(--font-cond); font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      padding: 8px 16px; border-radius: 9px; cursor: pointer; }
+    .board-foot button:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Clue overlay */
+    .overlay { position: fixed; inset: 0; z-index: 50; background: radial-gradient(1300px 900px at 50% 30%, #10225f, rgba(3,7,26,.97) 75%);
+      display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+      padding: 24px 5vw; gap: clamp(14px, 2.6vh, 30px); }
+    .overlay.show { display: flex; animation: popIn .35s cubic-bezier(.2,1.2,.35,1); }
+    @keyframes popIn { 0% { opacity: 0; transform: scale(.85); } 100% { opacity: 1; transform: scale(1); } }
+    .ov-cat { font-weight: 700; text-transform: uppercase; letter-spacing: .28em; color: var(--accent);
+      font-size: clamp(14px, 2vw, 24px); background: rgba(0,0,0,.35); border: 2px solid rgba(255,255,255,.18);
+      border-radius: 999px; padding: 8px 26px; }
+    .ov-q { max-width: 900px; background: linear-gradient(180deg, var(--primary-lt), var(--primary-dk));
+      border-radius: 18px; padding: clamp(18px, 3.4vh, 34px) clamp(20px, 3vw, 44px);
+      font-weight: 700; font-size: clamp(20px, 3vw, 38px); line-height: 1.25;
+      box-shadow: inset 0 2px 10px rgba(255,255,255,.25), 0 18px 50px rgba(0,0,0,.55); }
+    .ov-choices { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(8px, 1.4vh, 14px); width: min(900px, 92vw); }
+    @media (max-width: 640px) { .ov-choices { grid-template-columns: 1fr; } }
+    .choice { display: flex; align-items: center; gap: 14px; text-align: left; cursor: pointer;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+      border: 2px solid rgba(255,255,255,.18); border-radius: 12px; color: #fff;
+      font-family: var(--font-cond); font-weight: 600; font-size: clamp(16px, 2vw, 24px);
+      padding: clamp(10px, 1.8vh, 16px) 18px; transition: transform .1s, border-color .1s; }
+    .choice:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .choice b { font-family: var(--font-display); color: var(--accent); font-size: 1.1em; }
+    .choice.correct { background: linear-gradient(180deg, rgba(23,163,74,.5), rgba(23,163,74,.2)); border-color: #3ce88a; }
+    .choice.wrong { background: linear-gradient(180deg, rgba(226,59,59,.4), rgba(226,59,59,.15)); border-color: #ff7070; opacity: .85; }
+    .choice.dim { opacity: .45; }
+    .choice:disabled { cursor: default; transform: none; }
+    .ov-verdict { min-height: 1.3em; font-family: var(--font-display); font-size: clamp(22px, 3.4vw, 42px);
+      letter-spacing: .02em; opacity: 0; transform: scale(.6); transition: transform .3s cubic-bezier(.2,1.5,.4,1), opacity .3s; }
+    .ov-verdict.show { opacity: 1; transform: scale(1); }
+    .ov-verdict.good { color: #3ce88a; text-shadow: 0 3px 0 #0c5c31, 0 0 30px rgba(60,232,138,.4); }
+    .ov-verdict.bad { color: #ff7070; text-shadow: 0 3px 0 #6e1414; }
+    .ov-back { background: linear-gradient(180deg, var(--accent), #e0a800); color: #3a2500; border: none;
+      font-family: var(--font-cond); font-weight: 700; font-size: 18px; letter-spacing: .08em; text-transform: uppercase;
+      padding: 12px 34px; border-radius: 12px; cursor: pointer; box-shadow: 0 8px 22px rgba(0,0,0,.45); }
+    .ov-back:hover { filter: brightness(1.08); }
+    .ov-note { color: #8b9bd0; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+
+    footer { text-align: center; margin-top: 34px; color: #8b9bd0; font-size: 14px; line-height: 1.6; }
+    footer b { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="preview-ribbon"><span class="dot"></span> Example board · client preview — tap any dollar tile <span class="dot"></span></div>
+
+    <header>
+      <div class="kicker">TeamBuilding ROI presents</div>
+      <h1>TBROI <span>JEOPARDY!</span></h1>
+    </header>
+    <p class="explain">
+      This is a <b>self-guided example</b> so you can see how a board looks and how questions are formatted —
+      one question, four possible answers. Click any tile, pick an answer, and watch the reveal.
+      <b>On event day you won’t touch a thing:</b> a TeamBuilding ROI host runs the real game from a private
+      control dashboard, and your custom categories &amp; questions appear on the big screen just like this.
+    </p>
+
+    <div class="board">
+      <div class="grid" id="grid"></div>
+      <div class="board-foot">
+        <span>Every category, question, answer and point value is customized for your event.</span>
+        <button id="resetBtn">↺ Reset example</button>
+      </div>
+    </div>
+
+    <footer>
+      <b>TeamBuilding ROI · Game Show Roundup</b><br/>
+      Preview only — categories shown here are samples. Your board is built around your team, your inside jokes, your world.
+    </footer>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="ov-cat" id="ovCat"></div>
+    <div class="ov-q" id="ovQ"></div>
+    <div class="ov-choices" id="ovChoices"></div>
+    <div class="ov-verdict" id="ovVerdict"></div>
+    <button class="ov-back" id="ovBack">Back to board</button>
+    <div class="ov-note">Example only · the real game is run by your TBROI host</div>
+  </div>
+
+  <script>
+    'use strict';
+    // 5 sample categories × 5 questions — relaxed & fun. [question, [4 choices], correctIndex]
+    const BOARD = [
+      { name: 'Saturday Morning Cartoons', clues: [
+        ['This yellow-skinned family has been on the air since 1989.', ['Family Guy', 'The Simpsons', 'South Park', 'Futurama'], 1],
+        ['Tommy, Chuckie and the gang crawled through this 1991 classic.', ['Doug', 'Hey Arnold!', 'Rugrats', "Dexter's Laboratory"], 2],
+        ['SpongeBob SquarePants famously lives in one of these.', ['A pineapple', 'A conch shell', 'A sunken ship', 'A tiki hut'], 0],
+        ['The Warner siblings of "Animaniacs" are Yakko, Wakko and…', ['Dot', 'Dee', 'Daphne', 'Dizzy'], 0],
+        ['This moody 1992 animated series starred a certain Caped Crusader.', ['Spider-Man: TAS', 'X-Men: TAS', 'Superman: TAS', 'Batman: The Animated Series'], 3],
+      ]},
+      { name: 'Fun & Games', clues: [
+        ['Collect properties, build hotels, bankrupt your friends. That’s this game.', ['Risk', 'Clue', 'Monopoly', 'The Game of Life'], 2],
+        ['These mustachioed brothers keep rescuing a princess from Bowser.', ['The Mario Brothers', 'The Blues Brothers', 'The Wright Brothers', 'The Sonic Brothers'], 0],
+        ['Keeping a tiny beanbag airborne with anything but your hands is this game.', ['Four Square', 'Hacky Sack', 'Ultimate Frisbee', 'Tetherball'], 1],
+        ['Tetris, the most-ported video game ever, was invented in this country.', ['Japan', 'The USA', 'Russia', 'Germany'], 2],
+        ['Since 1993, "Planeswalkers" have battled with magical cards in this game.', ['Yu-Gi-Oh!', 'Pokémon', 'Dungeons & Dragons', 'Magic: The Gathering'], 3],
+      ]},
+      { name: 'Drive-Thru Confessions', clues: [
+        ['The "Golden Arches" belong to this burger empire.', ["McDonald's", 'Burger King', "Wendy's", 'In-N-Out'], 0],
+        ['This milkshake-machine salesman turned McDonald’s into a global franchise.', ['Dave Thomas', 'Ray Kroc', 'Colonel Sanders', 'Howard Schultz'], 1],
+        ['Founded in 1921, this slider chain is credited with popularizing the hamburger.', ['White Castle', 'A&W', 'Krystal', 'Shake Shack'], 0],
+        ['The Colonel’s famous chicken recipe boasts this many herbs and spices.', ['7', '11', '13', '21'], 1],
+        ['The "Ebi Filet-O" shrimp burger is a real international menu item at this chain.', ['KFC', 'Burger King', "McDonald's", 'Subway'], 2],
+      ]},
+      { name: 'Pop Star Power', clues: [
+        ['Pop’s original "Material Girl."', ['Taylor Swift', 'Britney Spears', 'Lady Gaga', 'Madonna'], 3],
+        ['She wore a dress made of meat to the 2010 MTV VMAs.', ['Nicki Minaj', 'Lady Gaga', 'Miley Cyrus', 'Katy Perry'], 1],
+        ['Her albums "19", "21", "25" and "30" are named after her age.', ['Beyoncé', 'Katy Perry', 'Adele', 'Ariana Grande'], 2],
+        ['He left One Direction in 2015 and released "Pillowtalk."', ['Harry Styles', 'Zayn Malik', 'Liam Payne', 'Niall Horan'], 1],
+        ['This Canadian legend wrote "Big Yellow Taxi" and the album "Blue."', ['Carly Simon', 'Alanis Morissette', 'Joni Mitchell', 'Céline Dion'], 2],
+      ]},
+      { name: 'Totally the ’90s', clues: [
+        ['This egg-shaped virtual pet demanded feeding — or else.', ['A Tamagotchi', 'A Furby', 'A Giga Pet', 'A Pet Rock'], 0],
+        ['The screeching robot noise of the ’90s internet came from this device.', ['A pager', 'A modem', 'A fax machine', 'A Walkman'], 1],
+        ['This 1997 blockbuster about a very large boat ruled the box office.', ['Armageddon', 'Jurassic Park', 'Titanic', 'Independence Day'], 2],
+        ['Spanish duo Los del Río gave the world this unavoidable 1996 dance.', ['The Macarena', 'The Electric Slide', 'The Cha Cha Slide', 'Gangnam Style'], 0],
+        ['GoldenEye and Mario Kart hit their stride on this 1996 Nintendo console.', ['Super Nintendo', 'GameCube', 'Nintendo 64', 'Game Boy Color'], 2],
+      ]},
+    ];
+    const VALUES = [100, 200, 300, 400, 500];
+
+    const $ = (id) => document.getElementById(id);
+    const used = new Set();
+    let current = null;
+
+    function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+    function renderGrid() {
+      const g = $('grid');
+      let html = BOARD.map((c) => `<div class="cat">${esc(c.name)}</div>`).join('');
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          const key = c + ':' + r;
+          html += used.has(key)
+            ? `<button class="tile used" data-k="${key}">✓</button>`
+            : `<button class="tile" data-k="${key}">$${VALUES[r]}</button>`;
+        }
+      }
+      g.innerHTML = html;
+      g.querySelectorAll('.tile:not(.used)').forEach((t) => { t.onclick = () => openClue(t.dataset.k); });
+    }
+
+    function openClue(key) {
+      const [c, r] = key.split(':').map(Number);
+      current = key;
+      const clue = BOARD[c].clues[r];
+      $('ovCat').textContent = BOARD[c].name + ' · $' + VALUES[r];
+      $('ovQ').textContent = clue[0];
+      const L = ['A', 'B', 'C', 'D'];
+      $('ovChoices').innerHTML = clue[1].map((ch, i) =>
+        `<button class="choice" data-i="${i}"><b>${L[i]}</b><span>${esc(ch)}</span></button>`).join('');
+      $('ovChoices').querySelectorAll('.choice').forEach((b) => { b.onclick = () => pick(+b.dataset.i, clue[2]); });
+      const v = $('ovVerdict'); v.className = 'ov-verdict'; v.textContent = '';
+      $('overlay').classList.add('show');
+    }
+
+    function pick(i, correct) {
+      const btns = [...$('ovChoices').querySelectorAll('.choice')];
+      btns.forEach((b) => { b.disabled = true; b.onclick = null; });
+      btns[correct].classList.add('correct');
+      btns.forEach((b, bi) => { if (bi !== correct) b.classList.add(bi === i ? 'wrong' : 'dim'); });
+      const v = $('ovVerdict');
+      const good = i === correct;
+      v.textContent = good ? '✔ Correct — nice one!' : '✕ Not quite — the answer is highlighted';
+      v.className = 'ov-verdict show ' + (good ? 'good' : 'bad');
+    }
+
+    $('ovBack').onclick = () => {
+      $('overlay').classList.remove('show');
+      if (current) used.add(current);
+      current = null;
+      renderGrid();
+    };
+    $('resetBtn').onclick = () => { used.clear(); renderGrid(); };
+    addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('overlay').classList.contains('show')) $('ovBack').click(); });
+
+    renderGrid();
+  </script>
+</body>
+</html>
